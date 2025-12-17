@@ -1,16 +1,46 @@
-import Database, { Database as DatabaseType } from 'better-sqlite3';
+import initSqlJs, { Database } from 'sql.js';
+
+type SqlJsDatabase = Database;
+import fs from 'fs';
 import path from 'path';
 
 const dbPath = path.join(__dirname, '../../data/vocab.db');
-const db: DatabaseType = new Database(dbPath);
 
-// Enable foreign keys
-db.pragma('foreign_keys = ON');
+let db: SqlJsDatabase | null = null;
 
-// Initialize database tables
-export function initDatabase() {
+// Save database to file
+function saveDatabase() {
+  if (db) {
+    const data = db.export();
+    const buffer = Buffer.from(data);
+    fs.writeFileSync(dbPath, buffer);
+  }
+}
+
+// Initialize database
+export async function initDatabase(): Promise<SqlJsDatabase> {
+  const SQL = await initSqlJs();
+
+  // Ensure data directory exists
+  const dataDir = path.dirname(dbPath);
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+
+  // Load existing database or create new one
+  if (fs.existsSync(dbPath)) {
+    const buffer = fs.readFileSync(dbPath);
+    db = new SQL.Database(buffer);
+  } else {
+    db = new SQL.Database();
+  }
+
+  // Enable foreign keys
+  db.run('PRAGMA foreign_keys = ON');
+
+  // Initialize database tables
   // Users table
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       username TEXT UNIQUE NOT NULL,
@@ -22,7 +52,7 @@ export function initDatabase() {
   `);
 
   // User progress table
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS user_progress (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT NOT NULL,
@@ -42,7 +72,7 @@ export function initDatabase() {
   `);
 
   // Leitner box data
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS leitner_data (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT NOT NULL,
@@ -60,7 +90,7 @@ export function initDatabase() {
   `);
 
   // Achievements table
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS user_achievements (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT NOT NULL,
@@ -72,7 +102,7 @@ export function initDatabase() {
   `);
 
   // Study sessions table
-  db.exec(`
+  db.run(`
     CREATE TABLE IF NOT EXISTS study_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       user_id TEXT NOT NULL,
@@ -87,7 +117,21 @@ export function initDatabase() {
     )
   `);
 
+  saveDatabase();
   console.log('Database initialized successfully');
+
+  return db;
 }
 
-export default db;
+export function getDb(): SqlJsDatabase {
+  if (!db) {
+    throw new Error('Database not initialized. Call initDatabase() first.');
+  }
+  return db;
+}
+
+export function save() {
+  saveDatabase();
+}
+
+export default { initDatabase, getDb, save };

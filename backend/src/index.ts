@@ -20,9 +20,6 @@ if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-// Initialize database
-initDatabase();
-
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',
@@ -57,13 +54,25 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
   res.status(500).json({ error: '서버 오류가 발생했습니다.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`
+// Initialize database and start server
+async function startServer() {
+  try {
+    await initDatabase();
+
+    app.listen(PORT, () => {
+      console.log(`
 ╔════════════════════════════════════════════╗
 ║   영단어 플래시카드 API 서버               ║
 ║   Server running on http://localhost:${PORT}  ║
 ╚════════════════════════════════════════════╝
-  `);
-});
+      `);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 export default app;

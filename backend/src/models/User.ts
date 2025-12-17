@@ -1,4 +1,4 @@
-import db from '../config/database';
+import { getDb, save } from '../config/database';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -36,41 +36,52 @@ export interface LeitnerData {
   wrong_count: number;
 }
 
+// Helper function to convert sql.js result to object
+function rowToObject<T>(columns: string[], values: unknown[]): T {
+  const obj: Record<string, unknown> = {};
+  columns.forEach((col, i) => {
+    obj[col] = values[i];
+  });
+  return obj as T;
+}
+
 class UserModel {
   create(username: string, password: string, email?: string): User {
+    const db = getDb();
     const id = uuidv4();
     const password_hash = bcrypt.hashSync(password, 10);
 
-    const stmt = db.prepare(`
-      INSERT INTO users (id, username, email, password_hash)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    stmt.run(id, username, email || null, password_hash);
+    db.run(
+      `INSERT INTO users (id, username, email, password_hash) VALUES (?, ?, ?, ?)`,
+      [id, username, email || null, password_hash]
+    );
 
     // Create initial progress
-    const progressStmt = db.prepare(`
-      INSERT INTO user_progress (user_id)
-      VALUES (?)
-    `);
-    progressStmt.run(id);
+    db.run(`INSERT INTO user_progress (user_id) VALUES (?)`, [id]);
 
+    save();
     return this.findById(id)!;
   }
 
   findById(id: string): User | undefined {
-    const stmt = db.prepare('SELECT * FROM users WHERE id = ?');
-    return stmt.get(id) as User | undefined;
+    const db = getDb();
+    const result = db.exec('SELECT * FROM users WHERE id = ?', [id]);
+    if (result.length === 0 || result[0].values.length === 0) return undefined;
+    return rowToObject<User>(result[0].columns, result[0].values[0]);
   }
 
   findByUsername(username: string): User | undefined {
-    const stmt = db.prepare('SELECT * FROM users WHERE username = ?');
-    return stmt.get(username) as User | undefined;
+    const db = getDb();
+    const result = db.exec('SELECT * FROM users WHERE username = ?', [username]);
+    if (result.length === 0 || result[0].values.length === 0) return undefined;
+    return rowToObject<User>(result[0].columns, result[0].values[0]);
   }
 
   findByEmail(email: string): User | undefined {
-    const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-    return stmt.get(email) as User | undefined;
+    const db = getDb();
+    const result = db.exec('SELECT * FROM users WHERE email = ?', [email]);
+    if (result.length === 0 || result[0].values.length === 0) return undefined;
+    return rowToObject<User>(result[0].columns, result[0].values[0]);
   }
 
   verifyPassword(user: User, password: string): boolean {
@@ -78,11 +89,14 @@ class UserModel {
   }
 
   getProgress(userId: string): UserProgress | undefined {
-    const stmt = db.prepare('SELECT * FROM user_progress WHERE user_id = ?');
-    return stmt.get(userId) as UserProgress | undefined;
+    const db = getDb();
+    const result = db.exec('SELECT * FROM user_progress WHERE user_id = ?', [userId]);
+    if (result.length === 0 || result[0].values.length === 0) return undefined;
+    return rowToObject<UserProgress>(result[0].columns, result[0].values[0]);
   }
 
   updateProgress(userId: string, updates: Partial<UserProgress>): void {
+    const db = getDb();
     const allowedFields = [
       'total_words_learned',
       'current_streak',
@@ -96,7 +110,7 @@ class UserModel {
     ];
 
     const fields: string[] = [];
-    const values: (string | number)[] = [];
+    const values: (string | number | null)[] = [];
 
     for (const [key, value] of Object.entries(updates)) {
       if (allowedFields.includes(key) && value !== undefined) {
@@ -110,24 +124,23 @@ class UserModel {
     fields.push('updated_at = CURRENT_TIMESTAMP');
     values.push(userId);
 
-    const stmt = db.prepare(`
-      UPDATE user_progress
-      SET ${fields.join(', ')}
-      WHERE user_id = ?
-    `);
-
-    stmt.run(...values);
+    db.run(`UPDATE user_progress SET ${fields.join(', ')} WHERE user_id = ?`, values);
+    save();
   }
 
   // Leitner methods
   getLeitnerData(userId: string): LeitnerData[] {
-    const stmt = db.prepare('SELECT * FROM leitner_data WHERE user_id = ?');
-    return stmt.all(userId) as LeitnerData[];
+    const db = getDb();
+    const result = db.exec('SELECT * FROM leitner_data WHERE user_id = ?', [userId]);
+    if (result.length === 0) return [];
+    return result[0].values.map((row: unknown[]) => rowToObject<LeitnerData>(result[0].columns, row));
   }
 
   getLeitnerDataForWord(userId: string, wordId: number): LeitnerData | undefined {
-    const stmt = db.prepare('SELECT * FROM leitner_data WHERE user_id = ? AND word_id = ?');
-    return stmt.get(userId, wordId) as LeitnerData | undefined;
+    const db = getDb();
+    const result = db.exec('SELECT * FROM leitner_data WHERE user_id = ? AND word_id = ?', [userId, wordId]);
+    if (result.length === 0 || result[0].values.length === 0) return undefined;
+    return rowToObject<LeitnerData>(result[0].columns, result[0].values[0]);
   }
 
   upsertLeitnerData(
@@ -139,33 +152,40 @@ class UserModel {
     correctCount: number,
     wrongCount: number
   ): void {
-    const stmt = db.prepare(`
-      INSERT INTO leitner_data (user_id, word_id, box, last_review, next_review, correct_count, wrong_count)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(user_id, word_id) DO UPDATE SET
-        box = excluded.box,
-        last_review = excluded.last_review,
-        next_review = excluded.next_review,
-        correct_count = excluded.correct_count,
-        wrong_count = excluded.wrong_count,
-        updated_at = CURRENT_TIMESTAMP
-    `);
-
-    stmt.run(userId, wordId, box, lastReview, nextReview, correctCount, wrongCount);
+    const db = getDb();
+    db.run(
+      `INSERT INTO leitner_data (user_id, word_id, box, last_review, next_review, correct_count, wrong_count)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(user_id, word_id) DO UPDATE SET
+         box = excluded.box,
+         last_review = excluded.last_review,
+         next_review = excluded.next_review,
+         correct_count = excluded.correct_count,
+         wrong_count = excluded.wrong_count,
+         updated_at = CURRENT_TIMESTAMP`,
+      [userId, wordId, box, lastReview, nextReview, correctCount, wrongCount]
+    );
+    save();
   }
 
   // Achievements
   getAchievements(userId: string): { achievement_id: string; unlocked_at: string }[] {
-    const stmt = db.prepare('SELECT achievement_id, unlocked_at FROM user_achievements WHERE user_id = ?');
-    return stmt.all(userId) as { achievement_id: string; unlocked_at: string }[];
+    const db = getDb();
+    const result = db.exec('SELECT achievement_id, unlocked_at FROM user_achievements WHERE user_id = ?', [userId]);
+    if (result.length === 0) return [];
+    return result[0].values.map((row: unknown[]) => ({
+      achievement_id: row[0] as string,
+      unlocked_at: row[1] as string
+    }));
   }
 
   addAchievement(userId: string, achievementId: string): void {
-    const stmt = db.prepare(`
-      INSERT OR IGNORE INTO user_achievements (user_id, achievement_id)
-      VALUES (?, ?)
-    `);
-    stmt.run(userId, achievementId);
+    const db = getDb();
+    db.run(
+      `INSERT OR IGNORE INTO user_achievements (user_id, achievement_id) VALUES (?, ?)`,
+      [userId, achievementId]
+    );
+    save();
   }
 
   // Study sessions
@@ -178,22 +198,34 @@ class UserModel {
     duration: number,
     mode: string
   ): void {
-    const stmt = db.prepare(`
-      INSERT INTO study_sessions (user_id, date, words_studied, correct_count, wrong_count, duration, mode)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
-    stmt.run(userId, date, wordsStudied, correctCount, wrongCount, duration, mode);
+    const db = getDb();
+    db.run(
+      `INSERT INTO study_sessions (user_id, date, words_studied, correct_count, wrong_count, duration, mode)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [userId, date, wordsStudied, correctCount, wrongCount, duration, mode]
+    );
+    save();
   }
 
   getStudySessions(userId: string, limit = 30): { date: string; words_studied: number; correct_count: number; wrong_count: number; duration: number; mode: string }[] {
-    const stmt = db.prepare(`
-      SELECT date, words_studied, correct_count, wrong_count, duration, mode
-      FROM study_sessions
-      WHERE user_id = ?
-      ORDER BY created_at DESC
-      LIMIT ?
-    `);
-    return stmt.all(userId, limit) as { date: string; words_studied: number; correct_count: number; wrong_count: number; duration: number; mode: string }[];
+    const db = getDb();
+    const result = db.exec(
+      `SELECT date, words_studied, correct_count, wrong_count, duration, mode
+       FROM study_sessions
+       WHERE user_id = ?
+       ORDER BY created_at DESC
+       LIMIT ?`,
+      [userId, limit]
+    );
+    if (result.length === 0) return [];
+    return result[0].values.map((row: unknown[]) => ({
+      date: row[0] as string,
+      words_studied: row[1] as number,
+      correct_count: row[2] as number,
+      wrong_count: row[3] as number,
+      duration: row[4] as number,
+      mode: row[5] as string
+    }));
   }
 
   // Stats
