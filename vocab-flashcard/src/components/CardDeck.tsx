@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle, XCircle, RotateCcw, Trophy } from 'lucide-react';
+import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Word } from '@/types';
 import FlashCard from './FlashCard';
 import ProgressBar from './ProgressBar';
@@ -117,23 +117,46 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     setShowConfetti(false);
   };
 
+  const handlePrevCard = () => {
+    if (currentIndex > 0) {
+      setIsFlipped(false);
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+
+  const handleNextCard = () => {
+    if (currentIndex < deck.length - 1) {
+      setIsFlipped(false);
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+
   const totalCards = words.length;
   const progress = (completedIds.size / totalCards) * 100;
   const remaining = totalCards - completedIds.size;
 
   if (words.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-4">
-        <div className="text-6xl mb-4">📚</div>
-        <h2 className="text-xl font-bold text-slate-800 dark:text-white mb-2">학습할 단어가 없어요</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-center">
-          {mode === 'review' ? '오늘 복습할 단어가 없습니다!' : '레벨을 선택해서 학습을 시작하세요.'}
+      <div className="flex flex-col items-center justify-center py-16 px-4">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 200 }}
+          className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/30 dark:to-purple-900/30 flex items-center justify-center mb-6"
+        >
+          <span className="text-5xl">📚</span>
+        </motion.div>
+        <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-2">학습할 단어가 없어요</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-center max-w-xs">
+          {mode === 'review' ? '오늘 복습할 단어가 없습니다! 대단해요!' : '레벨을 선택해서 학습을 시작하세요.'}
         </p>
       </div>
     );
   }
 
   if (isComplete) {
+    const accuracy = Math.round((correctCount / (correctCount + wrongCount)) * 100) || 0;
+
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -145,33 +168,71 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
         <motion.div
           animate={{ rotate: [0, -10, 10, -10, 0] }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-7xl mb-6"
+          className="w-24 h-24 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center mb-6 shadow-lg shadow-amber-500/30"
         >
-          <Trophy className="w-20 h-20 text-yellow-500" />
+          <Trophy className="w-12 h-12 text-white" />
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">학습 완료!</h2>
+        <h2 className="text-3xl font-black text-slate-800 dark:text-white mb-2">학습 완료!</h2>
+        <p className="text-slate-500 dark:text-slate-400 mb-6">정말 잘했어요!</p>
 
         <div className="grid grid-cols-2 gap-4 mb-6 w-full max-w-xs">
-          <div className="bg-green-100 dark:bg-green-900/30 rounded-2xl p-4 text-center">
-            <div className="text-3xl font-bold text-green-600 dark:text-green-400">{correctCount}</div>
-            <div className="text-sm text-green-700 dark:text-green-300">맞았어요</div>
-          </div>
-          <div className="bg-red-100 dark:bg-red-900/30 rounded-2xl p-4 text-center">
-            <div className="text-3xl font-bold text-red-600 dark:text-red-400">{wrongCount}</div>
-            <div className="text-sm text-red-700 dark:text-red-300">틀렸어요</div>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-gradient-to-br from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 rounded-2xl p-4 text-center shadow-lg"
+          >
+            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-2">
+              <CheckCircle className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-3xl font-black text-green-600 dark:text-green-400">{correctCount}</div>
+            <div className="text-sm text-green-700 dark:text-green-300 font-medium">맞았어요</div>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-gradient-to-br from-red-100 to-rose-100 dark:from-red-900/30 dark:to-rose-900/30 rounded-2xl p-4 text-center shadow-lg"
+          >
+            <div className="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center mx-auto mb-2">
+              <XCircle className="w-5 h-5 text-white" />
+            </div>
+            <div className="text-3xl font-black text-red-600 dark:text-red-400">{wrongCount}</div>
+            <div className="text-sm text-red-700 dark:text-red-300 font-medium">다시 볼게요</div>
+          </motion.div>
         </div>
 
-        <div className="text-lg text-slate-600 dark:text-slate-300 mb-6">
-          정확도: {Math.round((correctCount / (correctCount + wrongCount)) * 100) || 0}%
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-lg mb-6 w-full max-w-xs"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-bold text-slate-700 dark:text-slate-200">정확도</span>
+            <span className={`text-2xl font-black ${accuracy >= 80 ? 'text-green-500' : accuracy >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+              {accuracy}%
+            </span>
+          </div>
+          <div className="h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${accuracy}%` }}
+              transition={{ duration: 1, delay: 0.6 }}
+              className={`h-full rounded-full ${accuracy >= 80 ? 'bg-gradient-to-r from-green-500 to-emerald-400' : accuracy >= 50 ? 'bg-gradient-to-r from-amber-500 to-orange-400' : 'bg-gradient-to-r from-red-500 to-rose-400'}`}
+            />
+          </div>
+        </motion.div>
 
         <motion.button
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleRestart}
-          className="flex items-center gap-2 px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl font-medium transition-colors"
+          className="flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-2xl font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all"
         >
           <RotateCcw className="w-5 h-5" />
           다시 학습하기
@@ -182,62 +243,113 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
 
   return (
     <div className="flex flex-col items-center px-4 py-4">
-      {/* Progress */}
+      {/* Progress Section */}
       <div className="w-full max-w-sm mb-6">
-        <div className="flex justify-between text-sm text-slate-600 dark:text-slate-300 mb-2">
+        <div className="flex justify-between text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
           <span>진행률</span>
-          <span>{completedIds.size} / {totalCards}</span>
+          <span className="flex items-center gap-1">
+            <Sparkles className="w-4 h-4 text-indigo-500" />
+            {completedIds.size} / {totalCards}
+          </span>
         </div>
         <ProgressBar progress={progress} />
         <div className="flex justify-between text-xs text-slate-500 mt-2">
-          <span className="text-green-500">맞음: {correctCount}</span>
-          <span className="text-red-500">틀림: {wrongCount}</span>
+          <span className="flex items-center gap-1">
+            <CheckCircle className="w-3 h-3 text-green-500" />
+            맞음: {correctCount}
+          </span>
+          <span className="flex items-center gap-1">
+            <XCircle className="w-3 h-3 text-red-500" />
+            틀림: {wrongCount}
+          </span>
           <span>남음: {remaining}</span>
         </div>
       </div>
 
-      {/* Card */}
-      <AnimatePresence mode="wait">
-        {currentWord && (
-          <motion.div
-            key={currentWord.id}
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -100 }}
-            transition={{ duration: 0.3 }}
-            className="w-full"
-          >
-            <FlashCard
-              word={currentWord}
-              isFlipped={isFlipped}
-              onFlip={() => setIsFlipped(!isFlipped)}
-              boxLevel={getWordData(currentWord.id)?.box}
-              showBox={mode === 'review'}
-            />
-          </motion.div>
+      {/* Progress dots */}
+      <div className="flex items-center justify-center gap-1.5 mb-4 flex-wrap max-w-sm">
+        {deck.slice(0, 20).map((w, idx) => (
+          <div
+            key={w.id}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              idx === currentIndex
+                ? 'w-6 bg-indigo-500'
+                : completedIds.has(w.id)
+                ? 'w-2 bg-green-400'
+                : 'w-2 bg-slate-200 dark:bg-slate-700'
+            }`}
+          />
+        ))}
+        {deck.length > 20 && (
+          <span className="text-xs text-slate-400 ml-1">+{deck.length - 20}</span>
         )}
-      </AnimatePresence>
+      </div>
+
+      {/* Card with Navigation */}
+      <div className="relative w-full max-w-sm">
+        {/* Navigation Arrows */}
+        <button
+          onClick={handlePrevCard}
+          disabled={currentIndex === 0}
+          className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 p-2 rounded-full bg-white dark:bg-slate-700 shadow-lg transition-all ${
+            currentIndex === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'
+          }`}
+        >
+          <ChevronLeft className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+        </button>
+        <button
+          onClick={handleNextCard}
+          disabled={currentIndex === deck.length - 1}
+          className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 p-2 rounded-full bg-white dark:bg-slate-700 shadow-lg transition-all ${
+            currentIndex === deck.length - 1 ? 'opacity-30 cursor-not-allowed' : 'hover:scale-110'
+          }`}
+        >
+          <ChevronRight className="w-6 h-6 text-slate-600 dark:text-slate-300" />
+        </button>
+
+        {/* Card */}
+        <AnimatePresence mode="wait">
+          {currentWord && (
+            <motion.div
+              key={currentWord.id}
+              initial={{ opacity: 0, x: 50 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -50 }}
+              transition={{ duration: 0.3 }}
+              className="w-full"
+            >
+              <FlashCard
+                word={currentWord}
+                isFlipped={isFlipped}
+                onFlip={() => setIsFlipped(!isFlipped)}
+                boxLevel={getWordData(currentWord.id)?.box}
+                showBox={mode === 'review'}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       {/* Action buttons */}
-      <div className="flex gap-6 mt-8">
+      <div className="flex gap-4 mt-8">
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={handleWrong}
-          className="flex flex-col items-center gap-1 p-4 rounded-2xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg hover:shadow-xl transition-all"
         >
-          <XCircle className="w-10 h-10" />
-          <span className="text-sm font-medium">다시 볼래요</span>
+          <XCircle className="w-6 h-6 text-orange-500" />
+          모르겠어요
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={handleCorrect}
-          className="flex flex-col items-center gap-1 p-4 rounded-2xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl transition-all"
         >
-          <CheckCircle className="w-10 h-10" />
-          <span className="text-sm font-medium">알겠어요</span>
+          <CheckCircle className="w-6 h-6" />
+          알아요!
         </motion.button>
       </div>
     </div>
