@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy": "npm run build && vercel --prod && vercel alias isw-eword.vercel.app"
+    "deploy": "npm run build && vercel --prod && timeout /t 3 /nobreak >nul && vercel alias isw-eword.vercel.app"
   },
   "dependencies": {
     "@types/canvas-confetti": "^1.9.0",
