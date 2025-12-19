@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import {
   BarChart,
   Bar,
@@ -29,6 +29,31 @@ const BOX_COLORS = ['#ef4444', '#f97316', '#eab308', '#3b82f6', '#22c55e'];
 const BOX_NAMES = ['Box 1 (매일)', 'Box 2 (2일)', 'Box 3 (4일)', 'Box 4 (7일)', 'Box 5 (완료)'];
 
 export function BoxChart({ stats }: BoxChartProps) {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height });
+        }
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    // Delayed check for initial render
+    const timer = setTimeout(updateDimensions, 100);
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      clearTimeout(timer);
+    };
+  }, []);
+
   const data = useMemo(() => {
     return Object.entries(stats.boxes).map(([box, count]) => ({
       name: BOX_NAMES[parseInt(box) - 1],
@@ -47,32 +72,63 @@ export function BoxChart({ stats }: BoxChartProps) {
   }
 
   return (
-    <div className="h-64 min-h-[256px]">
-      <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-        <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-          <YAxis allowDecimals={false} />
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'var(--card-bg)',
-              border: 'none',
-              borderRadius: '12px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-            }}
-          />
-          <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.fill} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
+    <div ref={containerRef} className="h-64 w-full" style={{ minHeight: 256 }}>
+      {dimensions.width > 0 && dimensions.height > 0 ? (
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
+            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis allowDecimals={false} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'var(--card-bg)',
+                border: 'none',
+                borderRadius: '12px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              }}
+            />
+            <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.fill} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      ) : (
+        <div className="h-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
+        </div>
+      )}
     </div>
   );
 }
 
 export function AccuracyPieChart({ stats }: BoxChartProps) {
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      if (containerRef.current) {
+        const { width, height } = containerRef.current.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          setDimensions({ width, height });
+        }
+      }
+    };
+
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
+
+    // Delayed check for initial render
+    const timer = setTimeout(updateDimensions, 100);
+
+    return () => {
+      window.removeEventListener('resize', updateDimensions);
+      clearTimeout(timer);
+    };
+  }, []);
+
   const data = useMemo(() => {
     const total = stats.totalCorrect + stats.totalWrong;
     if (total === 0) return [];
@@ -95,38 +151,46 @@ export function AccuracyPieChart({ stats }: BoxChartProps) {
   const accuracy = Math.round((stats.totalCorrect / (stats.totalCorrect + stats.totalWrong)) * 100);
 
   return (
-    <div className="h-64 min-h-[256px] relative">
-      <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={50}
-            outerRadius={80}
-            paddingAngle={5}
-            dataKey="value"
-          >
-            {data.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={entry.color} />
-            ))}
-          </Pie>
-          <Tooltip
-            contentStyle={{
-              backgroundColor: 'var(--card-bg)',
-              border: 'none',
-              borderRadius: '12px',
-            }}
-          />
-          <Legend />
-        </PieChart>
-      </ResponsiveContainer>
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <div className="text-center">
-          <div className="text-2xl font-bold text-slate-800 dark:text-white">{accuracy}%</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400">정확도</div>
+    <div ref={containerRef} className="h-64 w-full relative" style={{ minHeight: 256 }}>
+      {dimensions.width > 0 && dimensions.height > 0 ? (
+        <>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={50}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: 'var(--card-bg)',
+                  border: 'none',
+                  borderRadius: '12px',
+                }}
+              />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-slate-800 dark:text-white">{accuracy}%</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">정확도</div>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="h-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" />
         </div>
-      </div>
+      )}
     </div>
   );
 }

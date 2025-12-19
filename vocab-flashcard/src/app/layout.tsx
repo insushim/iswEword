@@ -18,6 +18,9 @@ export const metadata: Metadata = {
   title: '영단어 플래시카드 - 초등 영어 학습',
   description: '초등학생을 위한 재미있는 영단어 암기 플래시카드 앱',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
