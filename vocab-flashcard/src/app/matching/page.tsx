@@ -18,7 +18,7 @@ export default function MatchingPage() {
 
   const levelWords = useMemo(() => getWordsByLevel(words, selectedLevel), [selectedLevel]);
 
-  const handleComplete = (time: number, moves: number) => {
+  const handleComplete = (time: number, _moves: number) => {
     if (time <= 30) {
       unlockAchievement('matching_fast');
     }

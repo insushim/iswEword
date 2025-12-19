@@ -1,15 +1,27 @@
 'use client';
 
 import { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Trophy, Flame, Target, BookOpen, Brain } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, BookOpen, Brain } from 'lucide-react';
 import Link from 'next/link';
 import { words } from '@/data/words';
-import { BoxChart, AccuracyPieChart, AchievementList, StreakCounter } from '@/components';
+import { AchievementList, StreakCounter } from '@/components';
 import { useProgress } from '@/hooks/useProgress';
 import { useLeitner } from '@/hooks/useLeitner';
 import { ACHIEVEMENTS, LEVEL_NAMES } from '@/types';
 import { getWordsByLevel, getLevelGradient } from '@/utils';
+
+// Dynamic imports for heavy chart components
+const BoxChart = dynamic(() => import('@/components/StatsChart').then(mod => ({ default: mod.BoxChart })), {
+  loading: () => <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" /></div>,
+  ssr: false
+});
+
+const AccuracyPieChart = dynamic(() => import('@/components/StatsChart').then(mod => ({ default: mod.AccuracyPieChart })), {
+  loading: () => <div className="h-64 flex items-center justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500" /></div>,
+  ssr: false
+});
 
 export default function StatsPage() {
   const { progress, dailyProgress, xpProgress } = useProgress();

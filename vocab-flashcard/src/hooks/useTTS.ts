@@ -35,6 +35,37 @@ const AVOID_VOICE_PATTERNS = [
   /heami/i,
 ];
 
+// 최적의 영어 네이티브 음성 찾기 (모듈 레벨 함수)
+function findBestVoice(
+  availableVoices: SpeechSynthesisVoice[],
+  preferredAccent: string
+): SpeechSynthesisVoice | null {
+  if (availableVoices.length === 0) return null;
+
+  // 1. 선호 목록에서 찾기
+  for (const preferred of PREFERRED_VOICES) {
+    const voice = availableVoices.find(
+      (v) => v.name.includes(preferred) || v.name === preferred
+    );
+    if (voice) return voice;
+  }
+
+  // 2. 설정된 억양(en-US, en-GB 등)에 맞는 음성 찾기
+  const accentVoice = availableVoices.find((v) => v.lang === preferredAccent);
+  if (accentVoice) return accentVoice;
+
+  // 3. en-US 음성 찾기 (기본)
+  const usVoice = availableVoices.find((v) => v.lang === 'en-US');
+  if (usVoice) return usVoice;
+
+  // 4. en-GB 음성 찾기
+  const gbVoice = availableVoices.find((v) => v.lang === 'en-GB');
+  if (gbVoice) return gbVoice;
+
+  // 5. 아무 영어 음성이나 반환
+  return availableVoices[0] || null;
+}
+
 export function useTTS() {
   const [settings, setSettings] = useLocalStorage<TTSSettings>('tts-settings', {
     accent: 'en-US',
@@ -43,6 +74,7 @@ export function useTTS() {
   });
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [currentVoiceName, setCurrentVoiceName] = useState('Default');
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   useEffect(() => {
@@ -58,12 +90,14 @@ export function useTTS() {
       setVoices(englishVoices);
 
       // 최적의 음성 선택
-      selectedVoiceRef.current = findBestVoice(englishVoices, settings.accent);
+      const bestVoice = findBestVoice(englishVoices, settings.accent);
+      selectedVoiceRef.current = bestVoice;
+      setCurrentVoiceName(bestVoice?.name || 'Default');
 
       // 디버그용 로그 (개발 시에만)
       if (process.env.NODE_ENV === 'development') {
         console.log('Available English voices:', englishVoices.map(v => `${v.name} (${v.lang})`));
-        console.log('Selected voice:', selectedVoiceRef.current?.name);
+        console.log('Selected voice:', bestVoice?.name);
       }
     };
 
@@ -81,37 +115,6 @@ export function useTTS() {
       }
     };
   }, [settings.accent]);
-
-  // 최적의 영어 네이티브 음성 찾기
-  const findBestVoice = (
-    availableVoices: SpeechSynthesisVoice[],
-    preferredAccent: string
-  ): SpeechSynthesisVoice | null => {
-    if (availableVoices.length === 0) return null;
-
-    // 1. 선호 목록에서 찾기
-    for (const preferred of PREFERRED_VOICES) {
-      const voice = availableVoices.find(
-        (v) => v.name.includes(preferred) || v.name === preferred
-      );
-      if (voice) return voice;
-    }
-
-    // 2. 설정된 억양(en-US, en-GB 등)에 맞는 음성 찾기
-    const accentVoice = availableVoices.find((v) => v.lang === preferredAccent);
-    if (accentVoice) return accentVoice;
-
-    // 3. en-US 음성 찾기 (기본)
-    const usVoice = availableVoices.find((v) => v.lang === 'en-US');
-    if (usVoice) return usVoice;
-
-    // 4. en-GB 음성 찾기
-    const gbVoice = availableVoices.find((v) => v.lang === 'en-GB');
-    if (gbVoice) return gbVoice;
-
-    // 5. 아무 영어 음성이나 반환
-    return availableVoices[0] || null;
-  };
 
   const speak = useCallback(
     (text: string) => {
@@ -180,6 +183,6 @@ export function useTTS() {
     setSettings,
     voices,
     previewVoice,
-    currentVoice: selectedVoiceRef.current?.name || 'Default'
+    currentVoice: currentVoiceName
   };
 }

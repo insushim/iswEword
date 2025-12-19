@@ -47,8 +47,8 @@ export function BoxChart({ stats }: BoxChartProps) {
   }
 
   return (
-    <div className="h-64">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-64 min-h-[256px]">
+      <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
         <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
           <XAxis dataKey="name" tick={{ fontSize: 12 }} />
@@ -95,8 +95,8 @@ export function AccuracyPieChart({ stats }: BoxChartProps) {
   const accuracy = Math.round((stats.totalCorrect / (stats.totalCorrect + stats.totalWrong)) * 100);
 
   return (
-    <div className="h-64 relative">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-64 min-h-[256px] relative">
+      <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={200}>
         <PieChart>
           <Pie
             data={data}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,7 +11,6 @@ import {
   Puzzle,
   Settings,
   Trophy,
-  Flame,
   Target,
   ChevronRight,
   ChevronLeft,
@@ -23,14 +22,15 @@ import {
   Zap,
   Star,
   ArrowRight,
+  Flame,
 } from 'lucide-react';
 import { words } from '@/data/words';
-import { ProgressBar, SettingsModal, AchievementBadge } from '@/components';
+import { SettingsModal, AchievementBadge } from '@/components';
 import { useProgress } from '@/hooks/useProgress';
 import { useLeitner } from '@/hooks/useLeitner';
 import { useSound } from '@/hooks/useSound';
 import { useTTS } from '@/hooks/useTTS';
-import { Achievement, Word } from '@/types';
+import { Achievement } from '@/types';
 import { shuffleArray, getWordsByLevel } from '@/utils';
 
 const menuItems = [
@@ -83,10 +83,9 @@ export default function HomePage() {
   const [showMenu, setShowMenu] = useState(false);
 
   // Quick study state
-  const [quickStudyWords, setQuickStudyWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [studiedCount, setStudiedCount] = useState(0);
+  const [roundKey, setRoundKey] = useState(0);
 
   const { progress, dailyProgress, xpProgress, recordCorrect, checkAchievements } = useProgress();
   const { getDueWords, stats, markCorrect } = useLeitner();
@@ -95,12 +94,12 @@ export default function HomePage() {
 
   const dueWordsCount = useMemo(() => getDueWords(words).length, [getDueWords]);
 
-  // Initialize quick study words
-  useEffect(() => {
+  // Initialize quick study words using useMemo
+  const quickStudyWords = useMemo(() => {
     const levelWords = getWordsByLevel(words, progress.unlockedLevels[progress.unlockedLevels.length - 1] || 1);
-    const shuffled = shuffleArray(levelWords).slice(0, 10);
-    setQuickStudyWords(shuffled);
-  }, [progress.unlockedLevels]);
+    return shuffleArray(levelWords).slice(0, 10);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [progress.unlockedLevels, roundKey]);
 
   const currentWord = quickStudyWords[currentIndex];
 
@@ -120,7 +119,6 @@ export default function HomePage() {
     playSound('correct');
     markCorrect(currentWord.id);
     recordCorrect();
-    setStudiedCount(prev => prev + 1);
     moveToNext();
   };
 
@@ -143,8 +141,7 @@ export default function HomePage() {
         playSound('achievement');
       }
       // Reset for new round
-      const levelWords = getWordsByLevel(words, progress.unlockedLevels[progress.unlockedLevels.length - 1] || 1);
-      setQuickStudyWords(shuffleArray(levelWords).slice(0, 10));
+      setRoundKey(prev => prev + 1);
       setCurrentIndex(0);
     }
   };
