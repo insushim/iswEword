@@ -1,4 +1,4 @@
-# CLAUDE.md - 완전 자동화 개발 최종판 v7.0
+# CLAUDE.md - 완전 자동화 개발 최종판 v8.0
 
 ## 🤖 에이전트 모드
 완전 자율 개발 에이전트. **오류 0까지 자동 수정**. 완료까지 멈추지 않음.
@@ -26,7 +26,7 @@
 
 ---
 
-# 🔧 자동 수정/검증 시스템 (핵심!)
+# 🔧 자동 수정/검증 시스템
 
 ## @autofix - 완전 자동 수정 ⭐⭐⭐
 ```yaml
@@ -50,11 +50,6 @@
   ✅ 환경변수 누락
   ✅ 의존성 문제
   ✅ 런타임 에러
-
-결과:
-  - 모든 에러 0개
-  - 빌드 성공
-  - 실행 가능한 상태
 ```
 
 ## @validate - 전체 코드 검증 ⭐⭐⭐
@@ -66,20 +61,13 @@
   ✅ 타입 안전성 (TypeScript strict)
   ✅ 코드 스타일 (ESLint + Prettier)
   ✅ 보안 취약점 (npm audit)
-  ✅ 의존성 버전 (outdated 체크)
+  ✅ 의존성 버전
   ✅ 빌드 성공 여부
   ✅ 환경변수 검증
   ✅ API 엔드포인트 테스트
   ✅ 데드 코드 탐지
   ✅ 순환 의존성 체크
   ✅ 번들 사이즈 분석
-
-출력:
-  📊 검증 보고서
-  ├── ✅ 통과 항목
-  ├── ⚠️ 경고 항목
-  ├── ❌ 실패 항목
-  └── 🔧 자동 수정 가능 항목
 ```
 
 ## @healthcheck - 프로젝트 건강 체크 ⭐⭐
@@ -87,44 +75,125 @@
 역할: 프로젝트 전반적인 상태 진단
 호출: "@healthcheck"
 
-진단 항목:
-  - 코드 품질 점수 (A-F)
-  - 테스트 커버리지
-  - 보안 점수
-  - 성능 점수
-  - 의존성 건강도
-  - 기술 부채 수준
-
-출력: 종합 건강 보고서 + 개선 권장사항
+진단: 코드 품질 점수, 테스트 커버리지, 보안 점수, 성능 점수
 ```
 
 ## @fix-all - 모든 문제 일괄 수정 ⭐⭐⭐
 ```yaml
 역할: 발견된 모든 문제를 한번에 수정
 호출: "@fix-all"
+```
 
-수정 항목:
-  - 타입 에러 자동 수정
-  - 린트 에러 자동 수정 (--fix)
-  - import 정리
-  - 미사용 변수 제거
-  - 포맷팅 정리
-  - 의존성 업데이트
-  - 보안 취약점 패치
+## @auto-test - 자동 테스트 생성 ⭐⭐
+```yaml
+역할: 코드 분석 후 테스트 자동 생성
+호출: "@auto-test [대상]"
+
+생성 항목:
+  - 단위 테스트 (Vitest)
+  - 통합 테스트
+  - E2E 테스트 (Playwright)
+  - API 테스트
+  - 스냅샷 테스트
+  - 커버리지 리포트
+```
+
+## @auto-doc - 자동 문서화 ⭐⭐
+```yaml
+역할: 코드 분석 후 문서 자동 생성
+호출: "@auto-doc"
+
+생성 항목:
+  - README.md
+  - API 문서 (Swagger/OpenAPI)
+  - 컴포넌트 문서 (Storybook)
+  - 타입 문서 (TypeDoc)
+  - 변경 로그 (CHANGELOG)
+  - 기여 가이드
+```
+
+## @auto-refactor - 자동 리팩토링 ⭐⭐
+```yaml
+역할: 코드 품질 자동 개선
+호출: "@auto-refactor [대상]"
+
+수행 작업:
+  - 중복 코드 제거
+  - 함수 분리
+  - 추상화 적용
+  - 네이밍 개선
+  - 복잡도 감소
+  - 패턴 적용
+```
+
+## @auto-optimize - 자동 최적화 ⭐⭐
+```yaml
+역할: 성능 자동 최적화
+호출: "@auto-optimize"
+
+최적화 항목:
+  - 이미지 최적화 (WebP, lazy loading)
+  - 코드 스플리팅
+  - 트리 쉐이킹
+  - 번들 최적화
+  - 캐싱 전략
+  - 메모이제이션
+  - 가상화 (virtualization)
+```
+
+## @auto-secure - 자동 보안 스캔 ⭐⭐
+```yaml
+역할: 보안 취약점 자동 스캔 및 수정
+호출: "@auto-secure"
+
+스캔 항목:
+  - npm audit
+  - OWASP Top 10
+  - XSS 취약점
+  - SQL Injection
+  - CSRF
+  - 인증/인가 검사
+  - 환경변수 노출
+  - 하드코딩된 비밀
+```
+
+## @auto-a11y - 자동 접근성 검사 ⭐⭐
+```yaml
+역할: 접근성 자동 검사 및 수정
+호출: "@auto-a11y"
+
+검사 항목:
+  - WCAG 2.1 준수
+  - aria-label
+  - 키보드 네비게이션
+  - 색상 대비
+  - 포커스 관리
+  - 스크린 리더 호환
+```
+
+## @auto-seo - 자동 SEO 분석 ⭐⭐
+```yaml
+역할: SEO 자동 분석 및 최적화
+호출: "@auto-seo"
+
+분석 항목:
+  - 메타태그
+  - Open Graph
+  - 구조화 데이터
+  - sitemap.xml
+  - robots.txt
+  - Core Web Vitals
+  - 페이지 속도
 ```
 
 ---
 
-# 🚀 원샷 빌드 (한번에 완성)
+# 🚀 원샷 빌드
 
-## @fullstack - 풀스택 원샷 빌더
+## @fullstack - 풀스택 원샷 빌더 ⭐⭐⭐
 ```yaml
-역할: 프론트 + 백엔드 + DB + 인증을 한번에 완성
 호출: "@fullstack [앱 설명]"
-
-예시:
-  "@fullstack 회원제 블로그 만들어줘"
-  "@fullstack 할일 관리 앱 만들어줘"
+예시: @fullstack 회원제 블로그 만들어줘
 
 자동 포함:
   ✅ 프로젝트 구조 전체
@@ -136,8 +205,6 @@
   ✅ 에러/로딩 처리
   ✅ .env.example
   ✅ 자동 검증 (@autofix 실행)
-
-결과: API 키만 넣으면 즉시 작동
 ```
 
 ## @quickstart - 템플릿 빠른 시작
@@ -145,163 +212,470 @@
 호출: "@quickstart [템플릿]"
 
 템플릿:
-  auth        # 인증 시스템
-  blog        # 블로그
-  dashboard   # 대시보드
-  ecommerce   # 쇼핑몰
-  chat        # 실시간 채팅
-  quiz        # 퀴즈/학습
-  game        # 웹 게임
-  landing     # 랜딩 페이지
-  saas        # SaaS
-  portfolio   # 포트폴리오
+  auth, blog, dashboard, ecommerce, chat,
+  quiz, game, landing, saas, portfolio,
+  admin, social, booking, marketplace, lms
 ```
 
 ## @clone - 서비스 클론
 ```yaml
 호출: "@clone [서비스명]"
-예시: @clone twitter, @clone notion, @clone trello
+예시: twitter, instagram, notion, trello, spotify, airbnb, netflix
 ```
 
 ## @feature - 기능 추가
 ```yaml
 호출: "@feature [기능명]"
-예시: @feature 댓글, @feature 좋아요, @feature 검색
+예시: 댓글, 좋아요, 검색, 알림, 결제, 팔로우, 북마크, 공유, 다크모드
 ```
 
 ## @page - 페이지 생성
 ```yaml
 호출: "@page [페이지명]"
-예시: @page 설정, @page 프로필, @page 대시보드
+예시: 설정, 프로필, 대시보드, 검색결과, 상세, 마이페이지
+```
+
+## @component - 컴포넌트 생성
+```yaml
+호출: "@component [컴포넌트명]"
+예시: 모달, 드롭다운, 테이블, 폼, 카드, 네비게이션
+```
+
+## @api - API 엔드포인트 생성
+```yaml
+호출: "@api [리소스명]"
+예시: @api users, @api posts, @api comments
+→ CRUD 전체 자동 생성
 ```
 
 ---
 
-# 🔄 유지보수/관리
+# 🎮 게임 개발 자동화
 
-## @maintain - 유지보수 모드 ⭐⭐
+## @game-init - 게임 프로젝트 초기화 ⭐⭐
 ```yaml
-역할: 정기적인 유지보수 작업 수행
+호출: "@game-init [게임 유형]"
+
+유형:
+  platformer   # 플랫포머
+  puzzle       # 퍼즐
+  rpg          # RPG
+  shooter      # 슈팅
+  racing       # 레이싱
+  card         # 카드 게임
+  idle         # 방치형
+  match3       # 매치3
+  tower-defense # 타워 디펜스
+
+자동 생성:
+  - 게임 루프
+  - 물리 엔진 설정
+  - 입력 시스템
+  - 씬 관리
+  - 에셋 로더
+  - 사운드 시스템
+```
+
+## @game-system - 게임 시스템 추가 ⭐⭐
+```yaml
+호출: "@game-system [시스템]"
+
+시스템:
+  physics      # 물리 엔진
+  collision    # 충돌 감지
+  particle     # 파티클 시스템
+  sound        # 사운드 시스템
+  save-load    # 저장/불러오기
+  achievement  # 업적 시스템
+  inventory    # 인벤토리
+  dialogue     # 대화 시스템
+  quest        # 퀘스트 시스템
+  crafting     # 제작 시스템
+  skill-tree   # 스킬 트리
+  ai           # AI/NPC 시스템
+```
+
+## @game-ui - 게임 UI 생성 ⭐⭐
+```yaml
+호출: "@game-ui [UI 유형]"
+
+UI:
+  hud          # 헤드업 디스플레이
+  menu         # 메인 메뉴
+  pause        # 일시정지 화면
+  settings     # 설정 화면
+  inventory    # 인벤토리 UI
+  shop         # 상점 UI
+  dialog       # 대화창
+  minimap      # 미니맵
+  healthbar    # 체력바
+  score        # 점수판
+```
+
+## @game-monetize - 수익화 시스템 ⭐
+```yaml
+호출: "@game-monetize [유형]"
+
+유형:
+  iap          # 인앱 구매
+  ads          # 광고 (리워드/배너/전면)
+  subscription # 구독
+  battlepass   # 배틀패스
+```
+
+## @game-social - 소셜 시스템 ⭐
+```yaml
+호출: "@game-social [기능]"
+
+기능:
+  leaderboard  # 리더보드
+  friend       # 친구 시스템
+  guild        # 길드/클랜
+  chat         # 채팅
+  gift         # 선물 시스템
+  pvp          # PvP 매칭
+```
+
+## @game-balance - 게임 밸런싱 ⭐
+```yaml
+호출: "@game-balance"
+
+분석/조정:
+  - 난이도 곡선
+  - 경제 밸런스
+  - 드롭률 조정
+  - 경험치 공식
+  - 데미지 계산
+  - 스테이지 진행
+```
+
+---
+
+# 📱 앱 개발 자동화
+
+## @app-init - 앱 프로젝트 초기화 ⭐⭐
+```yaml
+호출: "@app-init [유형]"
+
+유형:
+  pwa          # 프로그레시브 웹앱
+  expo         # React Native (Expo)
+  tauri        # 데스크톱 앱
+  electron     # Electron 앱
+```
+
+## @app-feature - 앱 기능 추가 ⭐⭐
+```yaml
+호출: "@app-feature [기능]"
+
+기능:
+  offline      # 오프라인 모드
+  push         # 푸시 알림
+  deeplink     # 딥링킹
+  biometric    # 생체 인증
+  camera       # 카메라
+  location     # 위치 서비스
+  storage      # 로컬 스토리지
+  share        # 공유 기능
+  qr           # QR 코드
+  nfc          # NFC
+```
+
+## @app-analytics - 분석 통합 ⭐
+```yaml
+호출: "@app-analytics [서비스]"
+
+서비스:
+  ga4          # Google Analytics 4
+  mixpanel     # Mixpanel
+  amplitude    # Amplitude
+  posthog      # PostHog
+  vercel       # Vercel Analytics
+```
+
+## @app-crash - 크래시 리포팅 ⭐
+```yaml
+호출: "@app-crash [서비스]"
+
+서비스:
+  sentry       # Sentry
+  bugsnag      # Bugsnag
+  crashlytics  # Firebase Crashlytics
+```
+
+## @app-ab - A/B 테스트 ⭐
+```yaml
+호출: "@app-ab [도구]"
+
+도구:
+  posthog      # PostHog
+  growthbook   # GrowthBook
+  optimizely   # Optimizely
+```
+
+---
+
+# 🔄 유지보수/관리 자동화
+
+## @maintain - 정기 유지보수 ⭐⭐
+```yaml
 호출: "@maintain"
 
-수행 작업:
-  1. 의존성 업데이트 (보안 패치)
-  2. 데드 코드 제거
-  3. 미사용 의존성 제거
-  4. 코드 포맷팅
-  5. 타입 정리
-  6. 성능 최적화 제안
-  7. 보안 취약점 스캔
+수행:
+  - 의존성 업데이트
+  - 보안 패치
+  - 데드 코드 제거
+  - 코드 포맷팅
+  - 성능 최적화
 ```
 
 ## @upgrade - 버전 업그레이드 ⭐⭐
 ```yaml
-역할: 패키지/프레임워크 버전 업그레이드
 호출: "@upgrade [대상]"
-
-예시:
-  @upgrade next          # Next.js 최신 버전
-  @upgrade all           # 모든 패키지
-  @upgrade react         # React 최신 버전
-  @upgrade dependencies  # 의존성 전체
-
-포함:
-  - Breaking changes 확인
-  - 마이그레이션 코드 수정
-  - 호환성 테스트
-  - 롤백 가이드
+예시: @upgrade next, @upgrade all, @upgrade react
 ```
 
 ## @migrate - 마이그레이션 ⭐⭐
 ```yaml
-역할: DB/코드 마이그레이션
 호출: "@migrate [대상]"
-
-예시:
-  @migrate pages-to-app    # Pages Router → App Router
-  @migrate prisma          # Prisma 마이그레이션
-  @migrate supabase        # Supabase 스키마 변경
-  @migrate auth            # 인증 시스템 변경
+예시: @migrate pages-to-app, @migrate prisma
 ```
 
 ## @cleanup - 코드 정리 ⭐
 ```yaml
-역할: 불필요한 코드/파일 정리
 호출: "@cleanup"
 
-정리 항목:
-  - 미사용 import 제거
-  - 미사용 변수/함수 제거
-  - 빈 파일 제거
-  - console.log 제거
-  - 주석 처리된 코드 제거
-  - 미사용 의존성 제거
-  - .next, node_modules 캐시 정리
+정리: 미사용 import, 미사용 변수, console.log, 캐시
 ```
 
 ## @dependency - 의존성 관리 ⭐
 ```yaml
-역할: 패키지 의존성 관리
 호출: "@dependency [작업]"
-
-작업:
-  @dependency check     # 의존성 상태 확인
-  @dependency update    # 안전한 업데이트
-  @dependency audit     # 보안 취약점 검사
-  @dependency fix       # 취약점 자동 수정
-  @dependency clean     # 미사용 패키지 제거
+작업: check, update, audit, fix, clean
 ```
 
 ## @backup - 백업
 ```yaml
-역할: 코드/데이터 백업
 호출: "@backup [대상]"
-
-예시:
-  @backup code        # 코드 백업 (git stash)
-  @backup database    # DB 백업 스크립트 생성
-  @backup env         # 환경변수 백업
+대상: code, database, env
 ```
 
 ## @rollback - 롤백
 ```yaml
-역할: 이전 상태로 복원
 호출: "@rollback [대상]"
-
-예시:
-  @rollback last       # 마지막 변경 취소
-  @rollback package    # 패키지 버전 롤백
-  @rollback migration  # 마이그레이션 롤백
 ```
 
 ## @hotfix - 긴급 수정 ⭐
 ```yaml
-역할: 프로덕션 긴급 버그 수정
-호출: "@hotfix [문제 설명]"
+호출: "@hotfix [문제]"
+```
 
-프로세스:
-  1. 문제 즉시 분석
-  2. 최소 범위 수정
-  3. 빌드 테스트
-  4. 배포 준비
+## @monitor - 모니터링 설정 ⭐⭐
+```yaml
+호출: "@monitor [설정]"
+
+설정:
+  uptime       # 업타임 모니터링
+  performance  # 성능 모니터링
+  error        # 에러 추적
+  log          # 로그 수집
+  alert        # 알림 설정
+```
+
+## @log-analyze - 로그 분석 ⭐
+```yaml
+호출: "@log-analyze"
+
+분석:
+  - 에러 패턴
+  - 사용자 행동
+  - 성능 병목
+  - 보안 이슈
+```
+
+## @cost-analyze - 비용 분석 ⭐
+```yaml
+호출: "@cost-analyze"
+
+분석:
+  - API 호출 비용
+  - DB 비용
+  - 호스팅 비용
+  - 최적화 제안
+```
+
+## @scale - 스케일링 ⭐
+```yaml
+호출: "@scale [방향]"
+
+방향:
+  up           # 스케일 업
+  down         # 스케일 다운
+  auto         # 오토 스케일링 설정
 ```
 
 ---
 
-# 👥 서브에이전트 전체 (40개)
+# 🐛 오류 수정 자동화
 
-## 🔧 자동 수정/검증 (7개) - NEW!
+## @debugger - 에러 분석/해결 ⭐⭐⭐
+```yaml
+호출: "@debugger [에러]"
+
+프로세스:
+  1. 에러 유형 분류
+  2. 원인 분석
+  3. 즉시 수정
+  4. 예방 패턴 적용
+```
+
+## @error-hunt - 에러 헌팅 ⭐⭐
+```yaml
+호출: "@error-hunt"
+
+전체 프로젝트에서 잠재적 에러 탐지:
+  - null/undefined 가능성
+  - 타입 불일치
+  - 비동기 처리 문제
+  - 메모리 누수
+  - 무한 루프 가능성
+  - 경쟁 조건
+```
+
+## @trace - 에러 추적 ⭐⭐
+```yaml
+호출: "@trace [에러]"
+
+추적:
+  - 에러 발생 경로
+  - 콜 스택 분석
+  - 관련 파일/함수
+  - 재현 조건
+```
+
+## @fix-type - 타입 에러 수정 ⭐
+```yaml
+호출: "@fix-type"
+모든 TypeScript 타입 에러 자동 수정
+```
+
+## @fix-lint - 린트 에러 수정 ⭐
+```yaml
+호출: "@fix-lint"
+모든 ESLint 에러 자동 수정
+```
+
+## @fix-build - 빌드 에러 수정 ⭐
+```yaml
+호출: "@fix-build"
+빌드 실패 원인 분석 및 수정
+```
+
+## @fix-runtime - 런타임 에러 수정 ⭐
+```yaml
+호출: "@fix-runtime [에러]"
+런타임 에러 분석 및 수정
+```
+
+## @fix-hydration - Hydration 에러 수정 ⭐
+```yaml
+호출: "@fix-hydration"
+Next.js Hydration 에러 자동 수정
+```
+
+## @fix-cors - CORS 에러 수정 ⭐
+```yaml
+호출: "@fix-cors"
+CORS 에러 분석 및 수정
+```
+
+## @fix-memory - 메모리 누수 수정 ⭐
+```yaml
+호출: "@fix-memory"
+
+분석:
+  - 이벤트 리스너 정리
+  - 구독 해제
+  - 참조 정리
+  - 캐시 관리
+```
+
+## @fix-performance - 성능 문제 수정 ⭐
+```yaml
+호출: "@fix-performance"
+
+분석/수정:
+  - 리렌더 문제
+  - 번들 사이즈
+  - 이미지 최적화
+  - 지연 로딩
+```
+
+---
+
+# 👥 서브에이전트 전체 (60개)
+
+## 🔧 자동 수정/검증 (12개)
 | 명령어 | 설명 |
 |--------|------|
-| `@autofix` | **에러 0개 될 때까지 자동 수정** |
-| `@validate` | 전체 코드 품질 검증 |
+| `@autofix` | **에러 0개까지 자동 수정** |
+| `@validate` | 전체 코드 검증 |
 | `@healthcheck` | 프로젝트 건강 체크 |
 | `@fix-all` | 모든 문제 일괄 수정 |
-| `@lint-fix` | 린트 에러 자동 수정 |
-| `@type-fix` | 타입 에러 자동 수정 |
+| `@auto-test` | 테스트 자동 생성 |
+| `@auto-doc` | 문서 자동 생성 |
+| `@auto-refactor` | 자동 리팩토링 |
+| `@auto-optimize` | 자동 최적화 |
+| `@auto-secure` | 자동 보안 스캔 |
+| `@auto-a11y` | 자동 접근성 검사 |
+| `@auto-seo` | 자동 SEO 분석 |
 | `@format` | 코드 포맷팅 |
 
-## 🔄 유지보수/관리 (8개) - NEW!
+## 🐛 오류 수정 (10개)
+| 명령어 | 설명 |
+|--------|------|
+| `@debugger [에러]` | 에러 분석/해결 |
+| `@error-hunt` | 잠재적 에러 탐지 |
+| `@trace [에러]` | 에러 추적 |
+| `@fix-type` | 타입 에러 수정 |
+| `@fix-lint` | 린트 에러 수정 |
+| `@fix-build` | 빌드 에러 수정 |
+| `@fix-runtime` | 런타임 에러 수정 |
+| `@fix-hydration` | Hydration 에러 수정 |
+| `@fix-cors` | CORS 에러 수정 |
+| `@fix-memory` | 메모리 누수 수정 |
+
+## 🚀 원샷 빌드 (7개)
+| 명령어 | 설명 |
+|--------|------|
+| `@fullstack [앱]` | 풀스택 앱 생성 |
+| `@quickstart [템플릿]` | 템플릿 시작 |
+| `@clone [서비스]` | 서비스 클론 |
+| `@feature [기능]` | 기능 추가 |
+| `@page [페이지]` | 페이지 생성 |
+| `@component [컴포넌트]` | 컴포넌트 생성 |
+| `@api [리소스]` | API 생성 |
+
+## 🎮 게임 개발 (6개)
+| 명령어 | 설명 |
+|--------|------|
+| `@game-init [유형]` | 게임 프로젝트 초기화 |
+| `@game-system [시스템]` | 게임 시스템 추가 |
+| `@game-ui [UI]` | 게임 UI 생성 |
+| `@game-monetize [유형]` | 수익화 시스템 |
+| `@game-social [기능]` | 소셜 시스템 |
+| `@game-balance` | 게임 밸런싱 |
+
+## 📱 앱 개발 (5개)
+| 명령어 | 설명 |
+|--------|------|
+| `@app-init [유형]` | 앱 프로젝트 초기화 |
+| `@app-feature [기능]` | 앱 기능 추가 |
+| `@app-analytics [서비스]` | 분석 통합 |
+| `@app-crash [서비스]` | 크래시 리포팅 |
+| `@app-ab` | A/B 테스트 |
+
+## 🔄 유지보수 (12개)
 | 명령어 | 설명 |
 |--------|------|
 | `@maintain` | 정기 유지보수 |
@@ -309,35 +683,22 @@
 | `@migrate [대상]` | 마이그레이션 |
 | `@cleanup` | 코드 정리 |
 | `@dependency [작업]` | 의존성 관리 |
-| `@backup [대상]` | 백업 |
-| `@rollback [대상]` | 롤백 |
+| `@backup` | 백업 |
+| `@rollback` | 롤백 |
 | `@hotfix [문제]` | 긴급 수정 |
-
-## 🚀 원샷 빌드 (5개)
-| 명령어 | 설명 |
-|--------|------|
-| `@fullstack [앱]` | 풀스택 앱 한번에 생성 |
-| `@quickstart [템플릿]` | 템플릿으로 빠른 시작 |
-| `@clone [서비스]` | 서비스 클론 |
-| `@feature [기능]` | 기능 추가 |
-| `@page [페이지]` | 페이지 생성 |
+| `@monitor [설정]` | 모니터링 |
+| `@log-analyze` | 로그 분석 |
+| `@cost-analyze` | 비용 분석 |
+| `@scale [방향]` | 스케일링 |
 
 ## 🛠️ 개발 (5개)
 | 명령어 | 설명 |
 |--------|------|
-| `@debugger [에러]` | 에러 분석/해결 |
 | `@frontend [작업]` | UI 개발 |
 | `@backend [작업]` | API 개발 |
-| `@database [작업]` | DB 설계/쿼리 |
-| `@api-designer [설계]` | API 구조 설계 |
-
-## 📐 설계 (4개)
-| 명령어 | 설명 |
-|--------|------|
+| `@database [작업]` | DB 작업 |
+| `@api-designer [설계]` | API 설계 |
 | `@architect [요청]` | 시스템 설계 |
-| `@ux-designer [작업]` | UX 설계 |
-| `@ui-designer [작업]` | UI 디자인 |
-| `@animator [요청]` | 애니메이션 |
 
 ## ✅ 품질 (6개)
 | 명령어 | 설명 |
@@ -352,122 +713,124 @@
 ## 🚀 배포 (2개)
 | 명령어 | 설명 |
 |--------|------|
-| `@deploy [작업]` | Vercel 배포 |
+| `@deploy [작업]` | 배포 |
 | `@devops [작업]` | CI/CD |
-
-## 📝 콘텐츠 (3개)
-| 명령어 | 설명 |
-|--------|------|
-| `@documentation [대상]` | 문서화 |
-| `@translator [번역]` | 번역 |
-| `@copywriter [요청]` | 문구 작성 |
 
 ## 🔍 리서치 (2개)
 | 명령어 | 설명 |
 |--------|------|
-| `@researcher [주제]` | 정보 검색 + 검증 |
+| `@researcher [주제]` | 정보 검색 |
 | `@fact-checker [내용]` | 팩트체크 |
 
-## 🎮 게임 (1개)
+## 📝 콘텐츠 (3개)
 | 명령어 | 설명 |
 |--------|------|
-| `@game-designer [게임]` | 게임 기획 |
-
-## 📊 분석 (2개)
-| 명령어 | 설명 |
-|--------|------|
-| `@data-analyst [요청]` | 데이터 분석 |
-| `@prompt-engineer [요청]` | AI 프롬프트 |
+| `@documentation` | 문서화 |
+| `@translator [번역]` | 번역 |
+| `@copywriter [요청]` | 문구 작성 |
 
 ---
 
-# 📚 스킬 전체 (45개)
+# 📚 스킬 전체 (65개)
 
-## 🔧 자동 수정/검증 (7개) - NEW!
+## 🔧 자동 수정/검증 (12개)
 | 트리거 | 스킬 |
 |--------|------|
 | "자동 수정", "에러 고쳐" | auto-repair |
 | "검증", "체크해줘" | code-validation |
-| "건강 체크", "상태 확인" | project-health |
+| "건강 체크" | project-health |
+| "테스트 생성", "테스트 만들어" | auto-test-gen |
+| "문서 생성", "문서화해줘" | auto-documentation |
+| "리팩토링해줘" | auto-refactoring |
+| "최적화해줘" | auto-optimization |
+| "보안 검사" | auto-security |
+| "접근성 검사" | auto-accessibility |
+| "SEO 검사" | auto-seo |
 | "린트 수정" | lint-fix |
 | "타입 수정" | type-fix |
-| "포맷", "정렬" | code-format |
-| "전체 수정" | fix-all |
 
-## 🔄 유지보수 (8개) - NEW!
+## 🐛 오류 수정 (10개)
 | 트리거 | 스킬 |
 |--------|------|
-| "유지보수", "관리" | maintenance |
-| "업그레이드", "버전 올려" | version-upgrade |
+| "에러", "오류" | error-debugger |
+| "에러 찾아줘" | error-hunting |
+| "에러 추적" | error-tracing |
+| "타입 에러" | type-error-fix |
+| "린트 에러" | lint-error-fix |
+| "빌드 에러" | build-error-fix |
+| "런타임 에러" | runtime-error-fix |
+| "hydration" | hydration-fix |
+| "CORS" | cors-fix |
+| "메모리 누수" | memory-leak-fix |
+
+## 🚀 핵심 (7개)
+| 트리거 | 스킬 |
+|--------|------|
+| "풀스택", "전체" | fullstack-generator |
+| "로그인", "인증" | auth-system |
+| "CRUD", "게시판" | crud-generator |
+| "웹앱" | nextjs-webapp |
+| "API 연결" | api-integrator |
+| "컴포넌트 생성" | component-generator |
+| "API 생성" | api-generator |
+
+## 🎮 게임 개발 (10개)
+| 트리거 | 스킬 |
+|--------|------|
+| "게임 초기화" | game-init |
+| "게임 시스템" | game-system |
+| "게임 UI" | game-ui |
+| "수익화" | game-monetize |
+| "리더보드" | game-leaderboard |
+| "게임 밸런싱" | game-balance |
+| "웹 게임", "Phaser" | web-game |
+| "유니티" | unity-game |
+| "레벨 시스템" | game-mechanics |
+| "멀티플레이어" | multiplayer |
+
+## 📱 앱 개발 (8개)
+| 트리거 | 스킬 |
+|--------|------|
+| "PWA" | pwa-app |
+| "모바일 앱" | mobile-app |
+| "오프라인" | offline-mode |
+| "푸시 알림" | push-notification |
+| "딥링크" | deep-linking |
+| "분석 통합" | analytics-integration |
+| "크래시 리포트" | crash-reporting |
+| "A/B 테스트" | ab-testing |
+
+## 🔄 유지보수 (12개)
+| 트리거 | 스킬 |
+|--------|------|
+| "유지보수" | maintenance |
+| "업그레이드" | version-upgrade |
 | "마이그레이션" | migration |
 | "정리", "클린업" | cleanup |
-| "의존성", "패키지 관리" | dependency-management |
+| "의존성" | dependency-management |
 | "백업" | backup |
-| "롤백", "되돌려" | rollback |
-| "긴급 수정", "핫픽스" | hotfix |
-
-## 🚀 핵심 (5개)
-| 트리거 | 스킬 |
-|--------|------|
-| "풀스택", "전체 만들어줘" | fullstack-generator |
-| "로그인", "회원가입" | auth-system |
-| "CRUD", "게시판" | crud-generator |
-| "웹앱", "Next.js" | nextjs-webapp |
-| "API 연결", "Gemini" | api-integrator |
+| "롤백" | rollback |
+| "핫픽스" | hotfix |
+| "모니터링" | monitoring |
+| "로그 분석" | log-analysis |
+| "비용 분석" | cost-analysis |
+| "스케일링" | scaling |
 
 ## 💾 데이터베이스 (3개)
 | 트리거 | 스킬 |
 |--------|------|
-| "DB 설계", "스키마" | database-design |
-| "DB 최적화", "쿼리" | database-optimizer |
-| "실시간", "채팅" | realtime |
-
-## 🎨 프론트엔드 (4개)
-| 트리거 | 스킬 |
-|--------|------|
-| "폼", "유효성 검사" | form-handling |
-| "상태 관리", "Zustand" | state-management |
-| "애니메이션" | animation |
-| "차트", "그래프" | charts |
-
-## 📱 앱/게임 (5개)
-| 트리거 | 스킬 |
-|--------|------|
-| "PWA", "오프라인" | pwa-app |
-| "모바일 앱", "Expo" | mobile-app |
-| "유니티", "Unity" | unity-game |
-| "웹 게임", "Phaser" | web-game |
-| "레벨 시스템" | game-mechanics |
+| "DB 설계" | database-design |
+| "DB 최적화" | database-optimizer |
+| "실시간" | realtime |
 
 ## ⚙️ 기능 (5개)
 | 트리거 | 스킬 |
 |--------|------|
 | "파일 업로드" | file-upload |
-| "결제", "Stripe" | payment |
-| "이메일 발송" | email |
+| "결제" | payment |
+| "이메일" | email |
 | "지도" | map |
 | "다국어" | i18n |
-
-## ✅ 품질 (6개)
-| 트리거 | 스킬 |
-|--------|------|
-| "에러", "오류" | error-debugger |
-| "테스트" | testing |
-| "SEO" | seo-optimization |
-| "접근성" | accessibility |
-| "성능 분석" | performance-audit |
-| "모니터링" | monitoring |
-
-## 🚀 배포 (1개)
-| 트리거 | 스킬 |
-|--------|------|
-| "배포", "Vercel" | vercel-deploy |
-
-## 🔍 리서치 (2개)
-| 트리거 | 스킬 |
-|--------|------|
-| "자료 검색" | research-verification |
-| "버전 호환" | version-compatibility |
 
 ---
 
@@ -475,7 +838,7 @@
 
 ```yaml
 교차검증 필수:
-  - 최소 2-3개 공신력 있는 출처 확인
+  - 최소 2-3개 공신력 있는 출처
   - 불확실하면 "확인 필요" 명시
 
 할루시네이션 방지:
@@ -489,32 +852,14 @@
 
 ```yaml
 디자인:
-  - 글래스모피즘 (backdrop-blur)
-  - Framer Motion 애니메이션
-  - 다크모드 지원
+  - 글래스모피즘
+  - Framer Motion
+  - 다크모드
 
 컴포넌트:
   - 스켈레톤 로딩
   - 토스트 알림
   - 로딩/에러/빈 상태
-```
-
----
-
-# 💰 비용 최적화
-
-```yaml
-Supabase: 로컬 캐시, 구독 최소화
-AI API: 디바운스, 캐싱, 저렴한 모델 우선
-```
-
----
-
-# ⚖️ 저작권 안전
-
-```yaml
-폰트: Pretendard, Noto Sans KR, Inter (OFL)
-아이콘: Lucide React, Heroicons (MIT)
 ```
 
 ---
@@ -538,74 +883,79 @@ PWA: Serwist
 
 # 🔄 자동 실행 프로세스
 
-## 프로젝트 생성 시
+## 프로젝트 생성
 ```
-1. @fullstack [앱 설명]
-2. 자동으로 @autofix 실행
-3. 에러 0개 확인
-4. 완료 보고서 출력
+@fullstack [앱] → 자동 @autofix → 에러 0개 확인 → 완료
 ```
 
 ## 코드 수정 후
 ```
-1. 코드 수정
-2. @autofix 또는 @validate
-3. 에러 0개 될 때까지 반복
-4. 완료
+@autofix → 에러 0개까지 반복 → 완료
 ```
 
 ## 정기 유지보수
 ```
-1. @healthcheck (상태 확인)
-2. @maintain (유지보수)
-3. @dependency update (업데이트)
-4. @autofix (검증)
+@healthcheck → @maintain → @dependency update → @autofix
+```
+
+## 게임 개발
+```
+@game-init [유형] → @game-system [시스템] → @game-ui → @autofix
+```
+
+## 앱 개발
+```
+@app-init [유형] → @app-feature [기능] → @autofix
 ```
 
 ---
 
 # ⚡ 퀵 레퍼런스
 
-## 🔥 가장 중요한 명령어
+## 🔥 핵심 명령어
 ```
-@fullstack [앱 설명]    # 완전한 앱 한번에 + 자동 검증
-@autofix                # 에러 0개 될 때까지 자동 수정
-@validate               # 전체 검증
+@fullstack [앱]     # 완전한 앱 생성
+@autofix            # 에러 0개까지 자동 수정
+@validate           # 전체 검증
+@maintain           # 유지보수
+```
+
+## 자동 수정
+```
+@autofix      @fix-all      @fix-type
+@fix-lint     @fix-build    @fix-runtime
+@fix-hydration  @fix-cors   @fix-memory
+```
+
+## 자동 생성
+```
+@auto-test    @auto-doc     @auto-refactor
+@auto-optimize  @auto-secure  @auto-a11y
 ```
 
 ## 원샷 빌드
 ```
-@fullstack [앱]    @quickstart [템플릿]
-@clone [서비스]    @feature [기능]    @page [페이지]
+@fullstack    @quickstart   @clone
+@feature      @page         @component   @api
 ```
 
-## 자동 수정/검증
+## 게임 개발
 ```
-@autofix       @validate      @healthcheck
-@fix-all       @lint-fix      @type-fix
+@game-init    @game-system  @game-ui
+@game-monetize  @game-social  @game-balance
+```
+
+## 앱 개발
+```
+@app-init     @app-feature  @app-analytics
+@app-crash    @app-ab
 ```
 
 ## 유지보수
 ```
-@maintain      @upgrade       @migrate
-@cleanup       @dependency    @hotfix
-```
-
-## 개발
-```
-@debugger      @frontend      @backend
-@database      @api-designer
-```
-
-## 품질
-```
-@reviewer      @tester        @security
-@optimizer     @refactorer    @accessibility
-```
-
-## 배포
-```
-@deploy        @devops
+@maintain     @upgrade      @migrate
+@cleanup      @dependency   @monitor
+@hotfix       @rollback     @backup
 ```
 
 ---
@@ -620,18 +970,12 @@ PWA: Serwist
 ✅ 타입 체크: 에러 0개
 ✅ 린트: 에러 0개
 ✅ 테스트: 통과
+✅ 보안: 취약점 0개
+✅ 접근성: 통과
 
-📁 생성된 파일:
-- [파일 목록]
+📁 생성된 파일: [목록]
 
-🔑 필요한 환경변수:
-- .env.example 참조
-
-🚀 실행 방법:
-1. cp .env.example .env.local
-2. .env.local에 API 키 입력
-3. npm install
-4. npm run dev
+🚀 실행: npm run dev
 ═══════════════════════════════════════
 ```
 
@@ -641,4 +985,6 @@ PWA: Serwist
 
 **🔥 핵심:**
 - `@fullstack [앱]` → 완전한 앱 생성
-- `@autofix` → 에러 0개 될 때까지 자동 수정
+- `@autofix` → 에러 0개까지 자동 수정
+- `@game-init [유형]` → 게임 프로젝트 생성
+- `@app-init [유형]` → 앱 프로젝트 생성

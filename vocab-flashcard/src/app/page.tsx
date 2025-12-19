@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -77,6 +77,7 @@ const menuItems = [
 ];
 
 export default function HomePage() {
+  const [mounted, setMounted] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [showAchievement, setShowAchievement] = useState(false);
   const [newAchievement, setNewAchievement] = useState<Achievement | null>(null);
@@ -91,6 +92,11 @@ export default function HomePage() {
   const { getDueWords, stats, markCorrect } = useLeitner();
   const { playSound } = useSound();
   const { speak } = useTTS();
+
+  // Client-side only mounting
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const dueWordsCount = useMemo(() => getDueWords(words).length, [getDueWords]);
 
@@ -159,6 +165,33 @@ export default function HomePage() {
       setCurrentIndex(prev => prev + 1);
     }
   };
+
+  // Loading state for SSR
+  if (!mounted) {
+    return (
+      <div className="min-h-screen pb-24 bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">
+        <header className="sticky top-0 z-50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50">
+          <div className="max-w-lg mx-auto px-4 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white">
+                  <Flame className="w-4 h-4" />
+                  <span className="font-bold text-sm">0일</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="font-bold text-sm">Lv.1</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <div className="max-w-lg mx-auto px-4 py-8 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24 bg-gradient-to-b from-indigo-50 via-white to-purple-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800">

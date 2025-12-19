@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, Target, BookOpen, Brain } from 'lucide-react';
@@ -24,8 +24,13 @@ const AccuracyPieChart = dynamic(() => import('@/components/StatsChart').then(mo
 });
 
 export default function StatsPage() {
+  const [mounted, setMounted] = useState(false);
   const { progress, dailyProgress, xpProgress } = useProgress();
   const { stats, leitnerData } = useLeitner();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const wordCountByLevel = useMemo(() => {
     const counts: Record<number, number> = {};
@@ -45,6 +50,26 @@ export default function StatsPage() {
     });
     return counts;
   }, [leitnerData]);
+
+  // SSR 로딩 스켈레톤 - hydration 불일치 방지
+  if (!mounted) {
+    return (
+      <div className="min-h-screen pb-24">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-700/50">
+          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+            <div className="p-2 -ml-2 rounded-xl">
+              <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-300" />
+            </div>
+            <h1 className="text-lg font-bold text-slate-800 dark:text-white">학습 통계</h1>
+            <div className="w-9" />
+          </div>
+        </header>
+        <div className="max-w-lg mx-auto px-4 py-6 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pb-24">
