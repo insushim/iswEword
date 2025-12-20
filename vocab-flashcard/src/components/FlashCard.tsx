@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, RotateCcw, Sparkles } from 'lucide-react';
 import { Word } from '@/types';
@@ -19,23 +18,6 @@ interface FlashCardProps {
 export default function FlashCard({ word, isFlipped, onFlip, boxLevel, showBox = false }: FlashCardProps) {
   const { speak } = useTTS();
   const { playSound } = useSound();
-  const lastSpokenWordId = useRef<number | null>(null);
-
-  // 단어가 바뀔 때마다 자동으로 한 번 읽어주기 (무조건 실행)
-  useEffect(() => {
-    // 같은 단어는 다시 읽지 않음
-    if (word.id === lastSpokenWordId.current) {
-      return;
-    }
-    lastSpokenWordId.current = word.id;
-
-    // 카드 전환 후 약간의 딜레이를 줘서 읽기
-    const timer = setTimeout(() => {
-      speak(word.english);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [word.id, word.english, speak]);
 
   const handleFlip = () => {
     playSound('flip');

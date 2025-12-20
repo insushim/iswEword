@@ -10,6 +10,7 @@ import Confetti from './Confetti';
 import { useSound } from '@/hooks/useSound';
 import { useLeitner } from '@/hooks/useLeitner';
 import { useProgress } from '@/hooks/useProgress';
+import { useTTS } from '@/hooks/useTTS';
 import { shuffleArray } from '@/utils';
 
 interface CardDeckProps {
@@ -44,6 +45,10 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
   const { playSound } = useSound();
   const { markCorrect, markWrong, getWordData } = useLeitner();
   const { recordCorrect, recordWrong, checkAchievements } = useProgress();
+  const { speak } = useTTS();
+
+  // 마지막으로 읽은 단어 ID 추적
+  const lastSpokenWordIdRef = useRef<number | null>(null);
 
   useEffect(() => {
     const shuffled = shuffleArray(words);
@@ -57,107 +62,118 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     setIsProcessing(false);
     currentIndexRef.current = 0;
     deckRef.current = shuffled;
+    lastSpokenWordIdRef.current = null; // 리셋
   }, [words]);
 
   const currentWord = deck[currentIndex];
 
-  const handleCorrect = useCallback(() => {
-    if (!currentWord || isProcessing) {
-      return;
-    }
+  // 현재 단어가 바뀔 때마다 자동으로 읽어주기
+  useEffect(() => {
+    if (!currentWord) return;
+    if (currentWord.id === lastSpokenWordIdRef.current) return;
 
-    // 즉시 처리 중 상태로 변경 (중복 클릭 방지)
+    lastSpokenWordIdRef.current = currentWord.id;
+
+    // 약간의 딜레이 후 읽기
+    const timer = setTimeout(() => {
+      speak(currentWord.english);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [currentWord?.id, currentWord?.english, speak]);
+
+  const handleCorrect = useCallback(() => {
+    if (!currentWord || isProcessing) return;
+
     setIsProcessing(true);
 
-    // 현재 상태 스냅샷 저장
-    const wordToComplete = currentWord;
-    const currentDeck = deckRef.current;
+    // 현재 단어 ID 저장 (클로저 문제 방지)
+    const wordId = currentWord.id;
     const currentIdx = currentIndexRef.current;
+    const currentDeck = deckRef.current;
 
     playSound('correct');
-    markCorrect(wordToComplete.id);
+    markCorrect(wordId);
     recordCorrect();
 
-    const newCorrectCount = correctCount + 1;
-    const newCompletedIds = new Set(completedIds).add(wordToComplete.id);
+    setCorrectCount(prev => prev + 1);
+    setCompletedIds(prev => {
+      const newSet = new Set(prev).add(wordId);
 
-    setCorrectCount(newCorrectCount);
-    setCompletedIds(newCompletedIds);
+      // 모든 카드 완료 체크
+      const remaining = currentDeck.filter(w => !newSet.has(w.id));
+      if (remaining.length === 0) {
+        setTimeout(() => {
+          setIsComplete(true);
+          setShowConfetti(true);
+          playSound('complete');
+          checkAchievements();
+        }, 100);
+      }
+
+      return newSet;
+    });
     setIsFlipped(false);
 
-    const remainingCards = currentDeck.filter((w) => !newCompletedIds.has(w.id));
+    // 다음 카드로 이동 (간단하게)
+    setTimeout(() => {
+      const deck = deckRef.current;
+      const completed = new Set(completedIds).add(wordId);
 
-    if (remainingCards.length === 0) {
-      setIsComplete(true);
-      setShowConfetti(true);
-      playSound('complete');
-      checkAchievements();
-      onComplete?.({ correct: newCorrectCount, wrong: wrongCount });
-      setIsProcessing(false);
-      return;
-    }
-
-    // 다음 카드 인덱스 찾기
-    let nextIdx = -1;
-
-    // 현재 위치 다음부터 완료되지 않은 카드 찾기
-    for (let i = currentIdx + 1; i < currentDeck.length; i++) {
-      if (!newCompletedIds.has(currentDeck[i].id)) {
-        nextIdx = i;
-        break;
-      }
-    }
-
-    // 못 찾으면 처음부터 다시 찾기
-    if (nextIdx === -1) {
-      for (let i = 0; i < currentDeck.length; i++) {
-        if (!newCompletedIds.has(currentDeck[i].id)) {
+      // 다음 미완료 카드 찾기
+      let nextIdx = -1;
+      for (let i = currentIdx + 1; i < deck.length; i++) {
+        if (!completed.has(deck[i].id)) {
           nextIdx = i;
           break;
         }
       }
-    }
+      if (nextIdx === -1) {
+        for (let i = 0; i < deck.length; i++) {
+          if (!completed.has(deck[i].id)) {
+            nextIdx = i;
+            break;
+          }
+        }
+      }
 
-    if (nextIdx !== -1 && nextIdx !== currentIdx) {
-      setCurrentIndex(nextIdx);
-      currentIndexRef.current = nextIdx;
-    }
+      if (nextIdx !== -1) {
+        setCurrentIndex(nextIdx);
+        currentIndexRef.current = nextIdx;
+      }
 
-    // 처리 상태 해제 (충분한 딜레이)
-    setTimeout(() => {
       setIsProcessing(false);
-    }, 500);
-  }, [currentWord, isProcessing, correctCount, completedIds, wrongCount, playSound, markCorrect, recordCorrect, checkAchievements, onComplete]);
+    }, 300);
+  }, [currentWord, isProcessing, completedIds, playSound, markCorrect, recordCorrect, checkAchievements]);
 
   const handleWrong = useCallback(() => {
     if (!currentWord || isProcessing) return;
+
     setIsProcessing(true);
 
     playSound('wrong');
     markWrong(currentWord.id);
     recordWrong();
-    setWrongCount((prev) => prev + 1);
+    setWrongCount(prev => prev + 1);
     setIsFlipped(false);
 
-    // Move to back of deck
-    const currentDeck = deckRef.current;
+    // 카드를 덱 맨 뒤로 이동
     const currentIdx = currentIndexRef.current;
-    const newDeck = [...currentDeck];
+    const newDeck = [...deckRef.current];
     const [movedCard] = newDeck.splice(currentIdx, 1);
     newDeck.push(movedCard);
     setDeck(newDeck);
     deckRef.current = newDeck;
 
-    // 인덱스가 덱 길이를 초과하면 0으로
+    // 인덱스 조정 (현재 위치에 다음 카드가 오므로 인덱스 유지, 단 범위 체크)
     if (currentIdx >= newDeck.length) {
       setCurrentIndex(0);
       currentIndexRef.current = 0;
     }
 
-    // 애니메이션 완료 후 처리 상태 해제
     setTimeout(() => {
       setIsProcessing(false);
-    }, 350);
+    }, 300);
   }, [currentWord, isProcessing, playSound, markWrong, recordWrong]);
 
   const handleRestart = () => {
