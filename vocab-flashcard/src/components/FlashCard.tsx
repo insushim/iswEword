@@ -17,21 +17,25 @@ interface FlashCardProps {
 }
 
 export default function FlashCard({ word, isFlipped, onFlip, boxLevel, showBox = false }: FlashCardProps) {
-  const { speak, settings } = useTTS();
+  const { speak } = useTTS();
   const { playSound } = useSound();
   const lastSpokenWordId = useRef<number | null>(null);
 
-  // 단어가 바뀔 때마다 자동으로 한 번 읽어주기
+  // 단어가 바뀔 때마다 자동으로 한 번 읽어주기 (무조건 실행)
   useEffect(() => {
-    if (settings.autoPlay && word.id !== lastSpokenWordId.current) {
-      lastSpokenWordId.current = word.id;
-      // 약간의 딜레이를 줘서 카드 전환 애니메이션 후 읽기
-      const timer = setTimeout(() => {
-        speak(word.english);
-      }, 100);
-      return () => clearTimeout(timer);
+    // 같은 단어는 다시 읽지 않음
+    if (word.id === lastSpokenWordId.current) {
+      return;
     }
-  }, [word.id, settings.autoPlay, speak, word.english]);
+    lastSpokenWordId.current = word.id;
+
+    // 카드 전환 후 약간의 딜레이를 줘서 읽기
+    const timer = setTimeout(() => {
+      speak(word.english);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [word.id, word.english, speak]);
 
   const handleFlip = () => {
     playSound('flip');

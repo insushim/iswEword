@@ -65,21 +65,26 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     if (!currentWord || isProcessing) {
       return;
     }
+
+    // 즉시 처리 중 상태로 변경 (중복 클릭 방지)
     setIsProcessing(true);
 
+    // 현재 상태 스냅샷 저장
+    const wordToComplete = currentWord;
+    const currentDeck = deckRef.current;
+    const currentIdx = currentIndexRef.current;
+
     playSound('correct');
-    markCorrect(currentWord.id);
+    markCorrect(wordToComplete.id);
     recordCorrect();
 
     const newCorrectCount = correctCount + 1;
-    const newCompletedIds = new Set(completedIds).add(currentWord.id);
+    const newCompletedIds = new Set(completedIds).add(wordToComplete.id);
 
     setCorrectCount(newCorrectCount);
     setCompletedIds(newCompletedIds);
     setIsFlipped(false);
 
-    const currentDeck = deckRef.current;
-    const currentIdx = currentIndexRef.current;
     const remainingCards = currentDeck.filter((w) => !newCompletedIds.has(w.id));
 
     if (remainingCards.length === 0) {
@@ -92,31 +97,36 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
       return;
     }
 
-    // 다음 카드 인덱스 찾기: 현재 인덱스 + 1
-    const nextIdx = currentIdx + 1;
+    // 다음 카드 인덱스 찾기
+    let nextIdx = -1;
 
-    if (nextIdx < currentDeck.length && !newCompletedIds.has(currentDeck[nextIdx].id)) {
-      setCurrentIndex(nextIdx);
-      currentIndexRef.current = nextIdx;
-    } else {
-      // 다음에 완료되지 않은 카드 찾기
-      const nextIndex = currentDeck.findIndex((w, i) => i > currentIdx && !newCompletedIds.has(w.id));
-      if (nextIndex !== -1) {
-        setCurrentIndex(nextIndex);
-        currentIndexRef.current = nextIndex;
-      } else {
-        const firstIndex = currentDeck.findIndex((w) => !newCompletedIds.has(w.id));
-        if (firstIndex !== -1) {
-          setCurrentIndex(firstIndex);
-          currentIndexRef.current = firstIndex;
+    // 현재 위치 다음부터 완료되지 않은 카드 찾기
+    for (let i = currentIdx + 1; i < currentDeck.length; i++) {
+      if (!newCompletedIds.has(currentDeck[i].id)) {
+        nextIdx = i;
+        break;
+      }
+    }
+
+    // 못 찾으면 처음부터 다시 찾기
+    if (nextIdx === -1) {
+      for (let i = 0; i < currentDeck.length; i++) {
+        if (!newCompletedIds.has(currentDeck[i].id)) {
+          nextIdx = i;
+          break;
         }
       }
     }
 
-    // 애니메이션 완료 후 처리 상태 해제
+    if (nextIdx !== -1 && nextIdx !== currentIdx) {
+      setCurrentIndex(nextIdx);
+      currentIndexRef.current = nextIdx;
+    }
+
+    // 처리 상태 해제 (충분한 딜레이)
     setTimeout(() => {
       setIsProcessing(false);
-    }, 350);
+    }, 500);
   }, [currentWord, isProcessing, correctCount, completedIds, wrongCount, playSound, markCorrect, recordCorrect, checkAchievements, onComplete]);
 
   const handleWrong = useCallback(() => {
@@ -377,7 +387,11 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
         <motion.button
           whileHover={isProcessing ? {} : { scale: 1.05 }}
           whileTap={isProcessing ? {} : { scale: 0.95 }}
-          onClick={handleWrong}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleWrong();
+          }}
           disabled={isProcessing}
           className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg transition-all ${
             isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'
@@ -390,7 +404,11 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
         <motion.button
           whileHover={isProcessing ? {} : { scale: 1.05 }}
           whileTap={isProcessing ? {} : { scale: 0.95 }}
-          onClick={handleCorrect}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            handleCorrect();
+          }}
           disabled={isProcessing}
           className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 transition-all ${
             isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'
