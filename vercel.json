@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "cd vocab-flashcard && npm install && npm run build",
+  "outputDirectory": "vocab-flashcard/.next",
+  "installCommand": "cd vocab-flashcard && npm install"
+}
