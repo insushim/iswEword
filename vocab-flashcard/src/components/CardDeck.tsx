@@ -19,6 +19,8 @@ interface CardDeckProps {
 }
 
 export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
+  console.log('[CardDeck] 렌더링 - 버전 2024-12-20-v2');
+
   const [deck, setDeck] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -40,8 +42,15 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
 
   // 단어 읽기 함수 (직접 speechSynthesis 사용)
   const speakWord = (text: string) => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    if (lastSpokenWord.current === text) return; // 같은 단어 중복 방지
+    console.log('[TTS] speakWord 호출:', text, '| 이전:', lastSpokenWord.current);
+    if (typeof window === 'undefined' || !window.speechSynthesis) {
+      console.log('[TTS] speechSynthesis 없음');
+      return;
+    }
+    if (lastSpokenWord.current === text) {
+      console.log('[TTS] 같은 단어 중복 - 스킵');
+      return;
+    }
 
     lastSpokenWord.current = text;
     window.speechSynthesis.cancel();
@@ -49,6 +58,7 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = 0.9;
+    console.log('[TTS] 읽기 시작:', text);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -85,9 +95,14 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
 
   // 알아요 버튼
   const onClickCorrect = () => {
-    if (!currentWord || isButtonDisabled.current) return;
+    console.log('[버튼] 알아요 클릭! currentWord:', currentWord?.english, '| disabled:', isButtonDisabled.current);
+    if (!currentWord || isButtonDisabled.current) {
+      console.log('[버튼] 알아요 - 조기 종료');
+      return;
+    }
 
     isButtonDisabled.current = true;
+    console.log('[버튼] 알아요 - 처리 시작');
 
     playSound('correct');
     markCorrect(currentWord.id);
@@ -138,6 +153,7 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
 
     // 다음 카드로 이동
     if (nextIndex !== -1) {
+      console.log('[버튼] 알아요 - 다음 인덱스:', nextIndex, '| 단어:', deck[nextIndex]?.english);
       lastSpokenWord.current = ''; // 리셋해서 새 단어 읽을 수 있게
       setCurrentIndex(nextIndex);
     }
@@ -145,6 +161,7 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     // 버튼 다시 활성화
     setTimeout(() => {
       isButtonDisabled.current = false;
+      console.log('[버튼] 알아요 - 버튼 다시 활성화');
     }, 400);
   };
 
