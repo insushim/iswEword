@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -87,6 +87,8 @@ export default function HomePage() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [roundKey, setRoundKey] = useState(0);
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const lastSpokenWord = useRef<string>('');
 
   const { progress, dailyProgress, xpProgress, recordCorrect, checkAchievements } = useProgress();
   const { getDueWords, stats, markCorrect } = useLeitner();
@@ -109,6 +111,30 @@ export default function HomePage() {
 
   const currentWord = quickStudyWords[currentIndex];
 
+  // 단어 읽기 함수
+  const speakWord = (text: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    if (lastSpokenWord.current === text) return;
+
+    lastSpokenWord.current = text;
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // 현재 단어가 바뀔 때 자동으로 읽기
+  useEffect(() => {
+    if (currentWord && mounted) {
+      const timer = setTimeout(() => {
+        speakWord(currentWord.english);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, mounted]);
+
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
     playSound('flip');
@@ -116,16 +142,23 @@ export default function HomePage() {
 
   const handleSpeak = () => {
     if (currentWord) {
-      speak(currentWord.english);
+      lastSpokenWord.current = ''; // 리셋해서 다시 읽을 수 있게
+      speakWord(currentWord.english);
     }
   };
 
   const handleKnow = () => {
-    if (!currentWord) return;
+    if (!currentWord || isButtonDisabled) return;
+
+    setIsButtonDisabled(true);
     playSound('correct');
     markCorrect(currentWord.id);
     recordCorrect();
     moveToNext();
+
+    setTimeout(() => {
+      setIsButtonDisabled(false);
+    }, 400);
   };
 
   const handleDontKnow = () => {
@@ -135,8 +168,10 @@ export default function HomePage() {
 
   const moveToNext = () => {
     setIsFlipped(false);
+    lastSpokenWord.current = ''; // 리셋
+
     if (currentIndex < quickStudyWords.length - 1) {
-      setTimeout(() => setCurrentIndex(prev => prev + 1), 200);
+      setCurrentIndex(prev => prev + 1);
     } else {
       // Completed all cards
       playSound('complete');
@@ -155,6 +190,7 @@ export default function HomePage() {
   const handlePrevCard = () => {
     if (currentIndex > 0) {
       setIsFlipped(false);
+      lastSpokenWord.current = '';
       setCurrentIndex(prev => prev - 1);
     }
   };
@@ -162,6 +198,7 @@ export default function HomePage() {
   const handleNextCard = () => {
     if (currentIndex < quickStudyWords.length - 1) {
       setIsFlipped(false);
+      lastSpokenWord.current = '';
       setCurrentIndex(prev => prev + 1);
     }
   };
