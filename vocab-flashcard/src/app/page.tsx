@@ -162,8 +162,15 @@ export default function HomePage() {
   };
 
   const handleDontKnow = () => {
-    playSound('flip');
-    setIsFlipped(true);
+    if (!currentWord || isButtonDisabled) return;
+
+    setIsButtonDisabled(true);
+    playSound('wrong');
+    moveToNext();
+
+    setTimeout(() => {
+      setIsButtonDisabled(false);
+    }, 400);
   };
 
   const moveToNext = () => {
