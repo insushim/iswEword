@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Word } from '@/types';
 import FlashCard from './FlashCard';
@@ -27,6 +27,19 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
   const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
   const [isComplete, setIsComplete] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // useRef로 현재 상태를 추적 (클로저 문제 해결)
+  const currentIndexRef = useRef(currentIndex);
+  const deckRef = useRef(deck);
+
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
+  useEffect(() => {
+    deckRef.current = deck;
+  }, [deck]);
 
   const { playSound } = useSound();
   const { markCorrect, markWrong, getWordData } = useLeitner();
@@ -41,69 +54,101 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     setWrongCount(0);
     setCompletedIds(new Set());
     setIsComplete(false);
+    setIsProcessing(false);
+    currentIndexRef.current = 0;
+    deckRef.current = shuffled;
   }, [words]);
 
   const currentWord = deck[currentIndex];
 
-  const moveToNext = useCallback(() => {
+  const handleCorrect = useCallback(() => {
+    if (!currentWord || isProcessing) {
+      return;
+    }
+    setIsProcessing(true);
+
+    playSound('correct');
+    markCorrect(currentWord.id);
+    recordCorrect();
+
+    const newCorrectCount = correctCount + 1;
+    const newCompletedIds = new Set(completedIds).add(currentWord.id);
+
+    setCorrectCount(newCorrectCount);
+    setCompletedIds(newCompletedIds);
     setIsFlipped(false);
 
-    const remainingCards = deck.filter((w) => !completedIds.has(w.id));
+    const currentDeck = deckRef.current;
+    const currentIdx = currentIndexRef.current;
+    const remainingCards = currentDeck.filter((w) => !newCompletedIds.has(w.id));
 
     if (remainingCards.length === 0) {
       setIsComplete(true);
       setShowConfetti(true);
       playSound('complete');
       checkAchievements();
-      onComplete?.({ correct: correctCount, wrong: wrongCount });
+      onComplete?.({ correct: newCorrectCount, wrong: wrongCount });
+      setIsProcessing(false);
       return;
     }
 
-    setTimeout(() => {
-      const nextIndex = deck.findIndex((w, i) => i > currentIndex && !completedIds.has(w.id));
+    // 다음 카드 인덱스 찾기: 현재 인덱스 + 1
+    const nextIdx = currentIdx + 1;
+
+    if (nextIdx < currentDeck.length && !newCompletedIds.has(currentDeck[nextIdx].id)) {
+      setCurrentIndex(nextIdx);
+      currentIndexRef.current = nextIdx;
+    } else {
+      // 다음에 완료되지 않은 카드 찾기
+      const nextIndex = currentDeck.findIndex((w, i) => i > currentIdx && !newCompletedIds.has(w.id));
       if (nextIndex !== -1) {
         setCurrentIndex(nextIndex);
+        currentIndexRef.current = nextIndex;
       } else {
-        const firstIndex = deck.findIndex((w) => !completedIds.has(w.id));
+        const firstIndex = currentDeck.findIndex((w) => !newCompletedIds.has(w.id));
         if (firstIndex !== -1) {
           setCurrentIndex(firstIndex);
+          currentIndexRef.current = firstIndex;
         }
       }
-    }, 200);
-  }, [deck, currentIndex, completedIds, correctCount, wrongCount, playSound, checkAchievements, onComplete]);
+    }
 
-  const handleCorrect = useCallback(() => {
-    if (!currentWord) return;
-
-    playSound('correct');
-    markCorrect(currentWord.id);
-    recordCorrect();
-    setCorrectCount((prev) => prev + 1);
-    setCompletedIds((prev) => new Set(prev).add(currentWord.id));
-    moveToNext();
-  }, [currentWord, playSound, markCorrect, recordCorrect, moveToNext]);
+    // 애니메이션 완료 후 처리 상태 해제
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 350);
+  }, [currentWord, isProcessing, correctCount, completedIds, wrongCount, playSound, markCorrect, recordCorrect, checkAchievements, onComplete]);
 
   const handleWrong = useCallback(() => {
-    if (!currentWord) return;
+    if (!currentWord || isProcessing) return;
+    setIsProcessing(true);
 
     playSound('wrong');
     markWrong(currentWord.id);
     recordWrong();
     setWrongCount((prev) => prev + 1);
+    setIsFlipped(false);
 
     // Move to back of deck
-    setIsFlipped(false);
-    setTimeout(() => {
-      const newDeck = [...deck];
-      const [movedCard] = newDeck.splice(currentIndex, 1);
-      newDeck.push(movedCard);
-      setDeck(newDeck);
+    const currentDeck = deckRef.current;
+    const currentIdx = currentIndexRef.current;
+    const newDeck = [...currentDeck];
+    const [movedCard] = newDeck.splice(currentIdx, 1);
+    newDeck.push(movedCard);
+    setDeck(newDeck);
+    deckRef.current = newDeck;
 
-      if (currentIndex >= newDeck.length) {
-        setCurrentIndex(0);
-      }
-    }, 200);
-  }, [currentWord, deck, currentIndex, playSound, markWrong, recordWrong]);
+    // 인덱스가 덱 길이를 초과하면 0으로
+    if (currentIdx >= newDeck.length) {
+      setCurrentIndex(0);
+      currentIndexRef.current = 0;
+    }
+
+    // 애니메이션 완료 후 처리 상태 해제
+    setTimeout(() => {
+      setIsProcessing(false);
+    }, 350);
+  }, [currentWord, isProcessing, playSound, markWrong, recordWrong]);
 
   const handleRestart = () => {
     const shuffled = shuffleArray(words);
@@ -308,45 +353,48 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
         </button>
 
         {/* Card */}
-        <AnimatePresence mode="wait">
-          {currentWord && (
-            <motion.div
-              key={currentWord.id}
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.3 }}
-              className="w-full"
-            >
-              <FlashCard
-                word={currentWord}
-                isFlipped={isFlipped}
-                onFlip={() => setIsFlipped(!isFlipped)}
-                boxLevel={getWordData(currentWord.id)?.box}
-                showBox={mode === 'review'}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {currentWord && (
+          <motion.div
+            key={currentWord.id}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+            className="w-full"
+          >
+            <FlashCard
+              word={currentWord}
+              isFlipped={isFlipped}
+              onFlip={() => setIsFlipped(!isFlipped)}
+              boxLevel={getWordData(currentWord.id)?.box}
+              showBox={mode === 'review'}
+            />
+          </motion.div>
+        )}
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-4 mt-8">
+      <div className="flex gap-4 mt-8 relative z-50">
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={isProcessing ? {} : { scale: 1.05 }}
+          whileTap={isProcessing ? {} : { scale: 0.95 }}
           onClick={handleWrong}
-          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+          disabled={isProcessing}
+          className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg transition-all ${
+            isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'
+          }`}
         >
           <XCircle className="w-6 h-6 text-orange-500" />
           모르겠어요
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={isProcessing ? {} : { scale: 1.05 }}
+          whileTap={isProcessing ? {} : { scale: 0.95 }}
           onClick={handleCorrect}
-          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl transition-all"
+          disabled={isProcessing}
+          className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 transition-all ${
+            isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'
+          }`}
         >
           <CheckCircle className="w-6 h-6" />
           알아요!
