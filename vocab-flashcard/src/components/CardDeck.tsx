@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Word } from '@/types';
@@ -10,7 +10,6 @@ import Confetti from './Confetti';
 import { useSound } from '@/hooks/useSound';
 import { useLeitner } from '@/hooks/useLeitner';
 import { useProgress } from '@/hooks/useProgress';
-import { useTTS } from '@/hooks/useTTS';
 import { shuffleArray } from '@/utils';
 
 interface CardDeckProps {
@@ -28,28 +27,32 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
   const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
   const [isComplete, setIsComplete] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
 
-  // useRef로 현재 상태를 추적 (클로저 문제 해결)
-  const currentIndexRef = useRef(currentIndex);
-  const deckRef = useRef(deck);
+  // 버튼 클릭 방지용 - useRef 사용
+  const isButtonDisabled = useRef(false);
 
-  useEffect(() => {
-    currentIndexRef.current = currentIndex;
-  }, [currentIndex]);
-
-  useEffect(() => {
-    deckRef.current = deck;
-  }, [deck]);
+  // 마지막으로 읽은 단어 추적
+  const lastSpokenWord = useRef<string>('');
 
   const { playSound } = useSound();
   const { markCorrect, markWrong, getWordData } = useLeitner();
   const { recordCorrect, recordWrong, checkAchievements } = useProgress();
-  const { speak } = useTTS();
 
-  // 마지막으로 읽은 단어 ID 추적
-  const lastSpokenWordIdRef = useRef<number | null>(null);
+  // 단어 읽기 함수 (직접 speechSynthesis 사용)
+  const speakWord = (text: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return;
+    if (lastSpokenWord.current === text) return; // 같은 단어 중복 방지
 
+    lastSpokenWord.current = text;
+    window.speechSynthesis.cancel();
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // 초기화
   useEffect(() => {
     const shuffled = shuffleArray(words);
     setDeck(shuffled);
@@ -59,97 +62,97 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     setWrongCount(0);
     setCompletedIds(new Set());
     setIsComplete(false);
-    setIsProcessing(false);
-    currentIndexRef.current = 0;
-    deckRef.current = shuffled;
-    lastSpokenWordIdRef.current = null; // 리셋
+    isButtonDisabled.current = false;
+    lastSpokenWord.current = '';
+
+    // 첫 단어 읽기
+    if (shuffled.length > 0) {
+      setTimeout(() => speakWord(shuffled[0].english), 500);
+    }
   }, [words]);
 
   const currentWord = deck[currentIndex];
 
-  // 현재 단어가 바뀔 때마다 자동으로 읽어주기
+  // 현재 단어가 바뀔 때 읽기
   useEffect(() => {
-    if (!currentWord) return;
-    if (currentWord.id === lastSpokenWordIdRef.current) return;
+    if (currentWord && currentWord.english) {
+      const timer = setTimeout(() => {
+        speakWord(currentWord.english);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex]); // currentIndex가 바뀔 때만 실행
 
-    lastSpokenWordIdRef.current = currentWord.id;
+  // 알아요 버튼
+  const onClickCorrect = () => {
+    if (!currentWord || isButtonDisabled.current) return;
 
-    // 약간의 딜레이 후 읽기
-    const timer = setTimeout(() => {
-      speak(currentWord.english);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [currentWord?.id, currentWord?.english, speak]);
-
-  const handleCorrect = useCallback(() => {
-    if (!currentWord || isProcessing) return;
-
-    setIsProcessing(true);
-
-    // 현재 단어 ID 저장 (클로저 문제 방지)
-    const wordId = currentWord.id;
-    const currentIdx = currentIndexRef.current;
-    const currentDeck = deckRef.current;
+    isButtonDisabled.current = true;
 
     playSound('correct');
-    markCorrect(wordId);
+    markCorrect(currentWord.id);
     recordCorrect();
 
-    setCorrectCount(prev => prev + 1);
-    setCompletedIds(prev => {
-      const newSet = new Set(prev).add(wordId);
+    const newCorrectCount = correctCount + 1;
+    const newCompletedIds = new Set(completedIds);
+    newCompletedIds.add(currentWord.id);
 
-      // 모든 카드 완료 체크
-      const remaining = currentDeck.filter(w => !newSet.has(w.id));
-      if (remaining.length === 0) {
-        setTimeout(() => {
-          setIsComplete(true);
-          setShowConfetti(true);
-          playSound('complete');
-          checkAchievements();
-        }, 100);
-      }
-
-      return newSet;
-    });
+    setCorrectCount(newCorrectCount);
+    setCompletedIds(newCompletedIds);
     setIsFlipped(false);
 
-    // 다음 카드로 이동 (간단하게)
-    setTimeout(() => {
-      const deck = deckRef.current;
-      const completed = new Set(completedIds).add(wordId);
+    // 남은 카드 확인
+    const remainingCards = deck.filter(w => !newCompletedIds.has(w.id));
 
-      // 다음 미완료 카드 찾기
-      let nextIdx = -1;
-      for (let i = currentIdx + 1; i < deck.length; i++) {
-        if (!completed.has(deck[i].id)) {
-          nextIdx = i;
+    if (remainingCards.length === 0) {
+      // 학습 완료
+      setIsComplete(true);
+      setShowConfetti(true);
+      playSound('complete');
+      checkAchievements();
+      onComplete?.({ correct: newCorrectCount, wrong: wrongCount });
+      isButtonDisabled.current = false;
+      return;
+    }
+
+    // 다음 카드 찾기
+    let nextIndex = -1;
+
+    // 현재 위치 다음부터 찾기
+    for (let i = currentIndex + 1; i < deck.length; i++) {
+      if (!newCompletedIds.has(deck[i].id)) {
+        nextIndex = i;
+        break;
+      }
+    }
+
+    // 못 찾으면 처음부터 찾기
+    if (nextIndex === -1) {
+      for (let i = 0; i < deck.length; i++) {
+        if (!newCompletedIds.has(deck[i].id)) {
+          nextIndex = i;
           break;
         }
       }
-      if (nextIdx === -1) {
-        for (let i = 0; i < deck.length; i++) {
-          if (!completed.has(deck[i].id)) {
-            nextIdx = i;
-            break;
-          }
-        }
-      }
+    }
 
-      if (nextIdx !== -1) {
-        setCurrentIndex(nextIdx);
-        currentIndexRef.current = nextIdx;
-      }
+    // 다음 카드로 이동
+    if (nextIndex !== -1) {
+      lastSpokenWord.current = ''; // 리셋해서 새 단어 읽을 수 있게
+      setCurrentIndex(nextIndex);
+    }
 
-      setIsProcessing(false);
-    }, 300);
-  }, [currentWord, isProcessing, completedIds, playSound, markCorrect, recordCorrect, checkAchievements]);
+    // 버튼 다시 활성화
+    setTimeout(() => {
+      isButtonDisabled.current = false;
+    }, 400);
+  };
 
-  const handleWrong = useCallback(() => {
-    if (!currentWord || isProcessing) return;
+  // 모르겠어요 버튼
+  const onClickWrong = () => {
+    if (!currentWord || isButtonDisabled.current) return;
 
-    setIsProcessing(true);
+    isButtonDisabled.current = true;
 
     playSound('wrong');
     markWrong(currentWord.id);
@@ -157,24 +160,24 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     setWrongCount(prev => prev + 1);
     setIsFlipped(false);
 
-    // 카드를 덱 맨 뒤로 이동
-    const currentIdx = currentIndexRef.current;
-    const newDeck = [...deckRef.current];
-    const [movedCard] = newDeck.splice(currentIdx, 1);
+    // 카드를 맨 뒤로 이동
+    const newDeck = [...deck];
+    const [movedCard] = newDeck.splice(currentIndex, 1);
     newDeck.push(movedCard);
     setDeck(newDeck);
-    deckRef.current = newDeck;
 
-    // 인덱스 조정 (현재 위치에 다음 카드가 오므로 인덱스 유지, 단 범위 체크)
-    if (currentIdx >= newDeck.length) {
+    // 현재 위치에 새 카드가 오므로 인덱스 유지
+    // 단, 범위를 벗어나면 0으로
+    if (currentIndex >= newDeck.length) {
       setCurrentIndex(0);
-      currentIndexRef.current = 0;
     }
 
+    lastSpokenWord.current = ''; // 리셋
+
     setTimeout(() => {
-      setIsProcessing(false);
-    }, 300);
-  }, [currentWord, isProcessing, playSound, markWrong, recordWrong]);
+      isButtonDisabled.current = false;
+    }, 400);
+  };
 
   const handleRestart = () => {
     const shuffled = shuffleArray(words);
@@ -186,19 +189,22 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     setCompletedIds(new Set());
     setIsComplete(false);
     setShowConfetti(false);
+    lastSpokenWord.current = '';
   };
 
   const handlePrevCard = () => {
     if (currentIndex > 0) {
       setIsFlipped(false);
-      setCurrentIndex(prev => prev - 1);
+      lastSpokenWord.current = '';
+      setCurrentIndex(currentIndex - 1);
     }
   };
 
   const handleNextCard = () => {
     if (currentIndex < deck.length - 1) {
       setIsFlipped(false);
-      setCurrentIndex(prev => prev + 1);
+      lastSpokenWord.current = '';
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
@@ -378,15 +384,9 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
           <ChevronRight className="w-6 h-6 text-slate-600 dark:text-slate-300" />
         </button>
 
-        {/* Card */}
+        {/* Card - key 제거하여 리마운트 방지 */}
         {currentWord && (
-          <motion.div
-            key={currentWord.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.2 }}
-            className="w-full"
-          >
+          <div className="w-full">
             <FlashCard
               word={currentWord}
               isFlipped={isFlipped}
@@ -394,45 +394,27 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
               boxLevel={getWordData(currentWord.id)?.box}
               showBox={mode === 'review'}
             />
-          </motion.div>
+          </div>
         )}
       </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-4 mt-8 relative z-50">
-        <motion.button
-          whileHover={isProcessing ? {} : { scale: 1.05 }}
-          whileTap={isProcessing ? {} : { scale: 0.95 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            handleWrong();
-          }}
-          disabled={isProcessing}
-          className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg transition-all ${
-            isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'
-          }`}
+      {/* Action buttons - 일반 button 사용 */}
+      <div className="flex gap-4 mt-8">
+        <button
+          onClick={onClickWrong}
+          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95"
         >
           <XCircle className="w-6 h-6 text-orange-500" />
           모르겠어요
-        </motion.button>
+        </button>
 
-        <motion.button
-          whileHover={isProcessing ? {} : { scale: 1.05 }}
-          whileTap={isProcessing ? {} : { scale: 0.95 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            handleCorrect();
-          }}
-          disabled={isProcessing}
-          className={`flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 transition-all ${
-            isProcessing ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-xl'
-          }`}
+        <button
+          onClick={onClickCorrect}
+          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl transition-all active:scale-95"
         >
           <CheckCircle className="w-6 h-6" />
           알아요!
-        </motion.button>
+        </button>
       </div>
     </div>
   );
