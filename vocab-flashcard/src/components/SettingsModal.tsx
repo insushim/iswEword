@@ -1,13 +1,15 @@
 'use client';
 
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Volume2, Moon, Sun, Trash2, Download, Upload, Gauge } from 'lucide-react';
+import { X, Volume2, Moon, Sun, Trash2, Download, Upload, Gauge, Smartphone } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
 import { useTTS } from '@/hooks/useTTS';
 import { useSound } from '@/hooks/useSound';
 import { useProgress } from '@/hooks/useProgress';
 import { useLeitner } from '@/hooks/useLeitner';
+import { useStudent } from '@/contexts/StudentContext';
+import SyncModal from './SyncModal';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -16,6 +18,7 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const isButtonDisabled = useRef(false);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   const debounce = (fn: () => void) => {
     if (isButtonDisabled.current) return;
@@ -23,11 +26,12 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     fn();
     setTimeout(() => { isButtonDisabled.current = false; }, 400);
   };
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const { settings: ttsSettings, setSettings: setTTSSettings, speak } = useTTS();
   const { soundEnabled, setSoundEnabled, playSound } = useSound();
-  const { progress, setDailyGoal, resetProgress } = useProgress();
-  const { resetAllData } = useLeitner();
+  const { progress, setDailyGoal, resetProgress, studySessions } = useProgress();
+  const { leitnerData, resetAllData } = useLeitner();
+  const { getStorageKey } = useStudent();
 
   const handleExport = () => {
     if (isButtonDisabled.current) return;
@@ -99,7 +103,22 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     speak('Hello! This is a test.');
   };
 
+  const handleOpenSync = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
+    setShowSyncModal(true);
+  };
+
+  const handleSyncDataLoaded = (data: { leitnerData: Record<string, unknown>; progressData: unknown; studySessions: unknown[]; }) => {
+    localStorage.setItem(getStorageKey('leitner-data'), JSON.stringify(data.leitnerData));
+    localStorage.setItem(getStorageKey('user-progress'), JSON.stringify(data.progressData));
+    localStorage.setItem(getStorageKey('study-sessions'), JSON.stringify(data.studySessions));
+    window.location.reload();
+  };
+
   return (
+    <>
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -128,6 +147,15 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             </div>
 
             <div className="p-4 space-y-6">
+              {/* Sync */}
+              <div>
+                <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">기기 간 동기화</h3>
+                <button onClick={handleOpenSync} className="w-full flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl text-white font-bold hover:from-indigo-600 hover:to-purple-600 transition-all">
+                  <Smartphone className="w-5 h-5" />
+                  <div className="text-left"><span className="block">다른 기기와 동기화</span><span className="text-xs font-normal opacity-80">PIN 코드로 학습 데이터 공유</span></div>
+                </button>
+              </div>
+
               {/* Theme */}
               <div>
                 <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3">테마</h3>
@@ -308,5 +336,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         </motion.div>
       )}
     </AnimatePresence>
+      <SyncModal isOpen={showSyncModal} onClose={() => setShowSyncModal(false)} leitnerData={leitnerData} progressData={progress} studySessions={studySessions} onDataLoaded={handleSyncDataLoaded} />
+    </>
   );
 }
