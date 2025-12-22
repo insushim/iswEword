@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import { useStudent } from '@/contexts/StudentContext';
 import {
   UserProgress,
   Achievement,
@@ -26,8 +27,9 @@ const DEFAULT_PROGRESS: UserProgress = {
 };
 
 export function useProgress() {
-  const [progress, setProgress] = useLocalStorage<UserProgress>('user-progress', DEFAULT_PROGRESS);
-  const [studySessions, setStudySessions] = useLocalStorage<StudySession[]>('study-sessions', []);
+  const { getStorageKey } = useStudent();
+  const [progress, setProgress] = useLocalStorage<UserProgress>(getStorageKey('user-progress'), DEFAULT_PROGRESS);
+  const [studySessions, setStudySessions] = useLocalStorage<StudySession[]>(getStorageKey('study-sessions'), []);
 
   const getToday = useCallback((): string => {
     return new Date().toISOString().split('T')[0];

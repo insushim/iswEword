@@ -1,6 +1,7 @@
 'use client';
 import { useCallback, useMemo } from 'react';
 import { useLocalStorage } from './useLocalStorage';
+import { useStudent } from '@/contexts/StudentContext';
 import { LeitnerData, Word } from '@/types';
 
 const BOX_INTERVALS: Record<number, number> = {
@@ -12,7 +13,8 @@ const BOX_INTERVALS: Record<number, number> = {
 };
 
 export function useLeitner() {
-  const [leitnerData, setLeitnerData] = useLocalStorage<Record<number, LeitnerData>>('leitner-data', {});
+  const { getStorageKey } = useStudent();
+  const [leitnerData, setLeitnerData] = useLocalStorage<Record<number, LeitnerData>>(getStorageKey('leitner-data'), {});
 
   const calculateNextReview = useCallback((box: number): string => {
     const today = new Date();

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { ThemeProvider } from '@/components/ThemeProvider';
+import Providers from '@/components/Providers';
 import Navigation from '@/components/Navigation';
 
 const geistSans = Geist({
@@ -53,12 +53,12 @@ export default function RootLayout({
         />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning>
-        <ThemeProvider>
+        <Providers>
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
             <main className="pb-20">{children}</main>
             <Navigation />
           </div>
-        </ThemeProvider>
+        </Providers>
       </body>
     </html>
   );
