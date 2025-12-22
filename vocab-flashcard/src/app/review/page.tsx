@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Settings, Box, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
@@ -15,8 +15,23 @@ export default function ReviewPage() {
   const [reviewMode, setReviewMode] = useState<ReviewMode>('due');
   const [selectedBox, setSelectedBox] = useState<number>(1);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const isButtonDisabled = useRef(false);
 
   const { getDueWords, getWrongWords, getWordsByBox, stats } = useLeitner();
+
+  const handleModeChange = (mode: ReviewMode) => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setReviewMode(mode);
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
+  };
+
+  const handleBoxChange = (box: number) => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setSelectedBox(box);
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
+  };
 
   const reviewWords = useMemo(() => {
     switch (reviewMode) {
@@ -57,7 +72,7 @@ export default function ReviewPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setReviewMode('due')}
+              onClick={() => handleModeChange('due')}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${
                 reviewMode === 'due'
                   ? 'bg-indigo-500 text-white'
@@ -72,7 +87,7 @@ export default function ReviewPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setReviewMode('wrong')}
+              onClick={() => handleModeChange('wrong')}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${
                 reviewMode === 'wrong'
                   ? 'bg-red-500 text-white'
@@ -87,7 +102,7 @@ export default function ReviewPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setReviewMode('box')}
+              onClick={() => handleModeChange('box')}
               className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${
                 reviewMode === 'box'
                   ? 'bg-purple-500 text-white'
@@ -111,7 +126,7 @@ export default function ReviewPage() {
                   key={box}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => setSelectedBox(box)}
+                  onClick={() => handleBoxChange(box)}
                   className={`flex flex-col items-center gap-1 p-3 rounded-xl transition-all ${
                     selectedBox === box
                       ? `${getBoxColor(box)} ring-2 ring-offset-2 ring-slate-400`

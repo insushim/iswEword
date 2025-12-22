@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Trophy, RotateCcw, Play } from 'lucide-react';
 import Link from 'next/link';
@@ -27,10 +27,14 @@ export default function SpellingPage() {
   const { progress, recordCorrect, recordWrong, unlockAchievement } = useProgress();
   const { markCorrect, markWrong } = useLeitner();
   const { playSound } = useSound();
+  const isButtonDisabled = useRef(false);
 
   const levelWords = useMemo(() => getWordsByLevel(words, selectedLevel), [selectedLevel]);
 
   const startSpelling = useCallback(() => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     const shuffled = shuffleArray(levelWords).slice(0, wordCount);
     setSpellingWords(shuffled);
     setCurrentIndex(0);
@@ -77,6 +81,9 @@ export default function SpellingPage() {
   }, [spellingWords, currentIndex, correctCount, markCorrect, markWrong, recordCorrect, recordWrong, unlockAchievement, playSound]);
 
   const restartSpelling = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     setIsStarted(false);
     setIsComplete(false);
   };

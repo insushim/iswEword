@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, RotateCcw, Sparkles } from 'lucide-react';
 import { Word } from '@/types';
@@ -18,15 +19,30 @@ interface FlashCardProps {
 export default function FlashCard({ word, isFlipped, onFlip, boxLevel, showBox = false }: FlashCardProps) {
   const { speak } = useTTS();
   const { playSound } = useSound();
+  const isButtonDisabled = useRef(false);
 
   const handleFlip = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+
     playSound('flip');
     onFlip();
+
+    setTimeout(() => {
+      isButtonDisabled.current = false;
+    }, 400);
   };
 
   const handleSpeak = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+
     speak(word.english);
+
+    setTimeout(() => {
+      isButtonDisabled.current = false;
+    }, 400);
   };
 
   return (

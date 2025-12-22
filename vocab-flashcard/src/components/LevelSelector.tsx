@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Check } from 'lucide-react';
 import { LEVEL_NAMES } from '@/types';
@@ -12,6 +13,14 @@ interface LevelSelectorProps {
 }
 
 export default function LevelSelector({ selectedLevel, onSelectLevel, unlockedLevels }: LevelSelectorProps) {
+  const isButtonDisabled = useRef(false);
+
+  const handleSelect = (level: number) => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    onSelectLevel(level);
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
+  };
   return (
     <div className="w-full max-w-sm mx-auto">
       <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-3">레벨 선택</h3>
@@ -25,7 +34,7 @@ export default function LevelSelector({ selectedLevel, onSelectLevel, unlockedLe
               key={level}
               whileHover={isUnlocked ? { scale: 1.05 } : undefined}
               whileTap={isUnlocked ? { scale: 0.95 } : undefined}
-              onClick={() => isUnlocked && onSelectLevel(level)}
+              onClick={() => isUnlocked && handleSelect(level)}
               disabled={!isUnlocked}
               className={`relative flex flex-col items-center p-3 rounded-xl transition-all ${
                 isSelected

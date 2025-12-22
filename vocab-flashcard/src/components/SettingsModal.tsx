@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Volume2, Moon, Sun, Trash2, Download, Upload, Gauge } from 'lucide-react';
 import { useTheme } from './ThemeProvider';
@@ -14,6 +15,14 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+  const isButtonDisabled = useRef(false);
+
+  const debounce = (fn: () => void) => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    fn();
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
+  };
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { settings: ttsSettings, setSettings: setTTSSettings, speak } = useTTS();
   const { soundEnabled, setSoundEnabled, playSound } = useSound();
@@ -21,6 +30,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { resetAllData } = useLeitner();
 
   const handleExport = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     const data = {
       leitnerData: localStorage.getItem('leitner-data'),
       userProgress: localStorage.getItem('user-progress'),
@@ -39,6 +51,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   const handleImport = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
@@ -66,6 +81,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   const handleReset = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     if (confirm('정말 모든 데이터를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
       resetProgress();
       resetAllData();
@@ -75,6 +93,9 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   const testTTS = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     speak('Hello! This is a test.');
   };
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Trophy, RotateCcw, Play } from 'lucide-react';
 import Link from 'next/link';
@@ -26,10 +26,14 @@ export default function QuizPage() {
   const { progress, recordCorrect, recordWrong, unlockAchievement } = useProgress();
   const { markCorrect, markWrong } = useLeitner();
   const { playSound } = useSound();
+  const isButtonDisabled = useRef(false);
 
   const levelWords = useMemo(() => getWordsByLevel(words, selectedLevel), [selectedLevel]);
 
   const startQuiz = useCallback(() => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     const newQuestions = generateQuizQuestions(levelWords, questionCount);
     setQuestions(newQuestions);
     setCurrentIndex(0);
@@ -68,6 +72,9 @@ export default function QuizPage() {
   }, [questions, currentIndex, correctCount, markCorrect, markWrong, recordCorrect, recordWrong, unlockAchievement, playSound]);
 
   const restartQuiz = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     setIsStarted(false);
     setIsComplete(false);
   };

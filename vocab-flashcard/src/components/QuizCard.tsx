@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Volume2 } from 'lucide-react';
 import { QuizQuestion } from '@/types';
@@ -19,6 +19,7 @@ export default function QuizCard({ question, onAnswer, questionNumber, totalQues
   const [isAnswered, setIsAnswered] = useState(false);
   const { speak } = useTTS();
   const { playSound } = useSound();
+  const isButtonDisabled = useRef(false);
 
   useEffect(() => {
     speak(question.word.english);
@@ -86,7 +87,12 @@ export default function QuizCard({ question, onAnswer, questionNumber, totalQues
         <div className="flex items-center justify-center gap-3">
           <h2 className="text-3xl font-bold text-white">{question.word.english}</h2>
           <button
-            onClick={() => speak(question.word.english)}
+            onClick={() => {
+              if (isButtonDisabled.current) return;
+              isButtonDisabled.current = true;
+              speak(question.word.english);
+              setTimeout(() => { isButtonDisabled.current = false; }, 400);
+            }}
             className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
           >
             <Volume2 className="w-5 h-5 text-white" />

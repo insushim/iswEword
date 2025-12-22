@@ -19,6 +19,7 @@ export default function SpellingInput({ word, onAnswer, questionNumber, totalQue
   const [isAnswered, setIsAnswered] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isButtonDisabled = useRef(false);
   const { speak } = useTTS();
   const { playSound } = useSound();
 
@@ -59,7 +60,10 @@ export default function SpellingInput({ word, onAnswer, questionNumber, totalQue
   };
 
   const handlePlaySound = () => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
     speak(word.english);
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
   };
 
   return (

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trophy, RotateCcw } from 'lucide-react';
-import { MatchingPair, Word } from '@/types';
+import { Word } from '@/types';
 import { useSound } from '@/hooks/useSound';
 import { shuffleArray, formatTime, getRandomItems } from '@/utils';
 import Confetti from './Confetti';
@@ -34,8 +34,12 @@ export default function MatchingGame({ words, pairCount = 6, onComplete }: Match
 
   const { playSound } = useSound();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isButtonDisabled = useRef(false);
 
   const initGame = useCallback(() => {
+    if (isButtonDisabled.current) return;
+    isButtonDisabled.current = true;
+    setTimeout(() => { isButtonDisabled.current = false; }, 400);
     const selectedWords = getRandomItems(words, pairCount);
     const cardItems: CardItem[] = [];
 
