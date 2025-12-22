@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, RotateCcw, Trophy, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { Word } from '@/types';
 import FlashCard from './FlashCard';
@@ -177,16 +177,54 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
     setWrongCount(prev => prev + 1);
     setIsFlipped(false);
 
-    // 카드를 맨 뒤로 이동
-    const newDeck = [...deck];
-    const [movedCard] = newDeck.splice(currentIndex, 1);
-    newDeck.push(movedCard);
-    setDeck(newDeck);
+    // 복습 모드에서만 카드를 맨 뒤로 이동 (다시 학습하도록)
+    if (mode === 'review' || mode === 'wrong') {
+      const newDeck = [...deck];
+      const [movedCard] = newDeck.splice(currentIndex, 1);
+      newDeck.push(movedCard);
+      setDeck(newDeck);
 
-    // 현재 위치에 새 카드가 오므로 인덱스 유지
-    // 단, 범위를 벗어나면 0으로
-    if (currentIndex >= newDeck.length) {
-      setCurrentIndex(0);
+      // 현재 위치에 새 카드가 오므로 인덱스 유지
+      if (currentIndex >= newDeck.length) {
+        setCurrentIndex(0);
+      }
+    } else {
+      // 학습 모드에서는 그냥 다음 카드로 이동 (반복 없음)
+      const newCompletedIds = new Set(completedIds);
+      newCompletedIds.add(currentWord.id);
+      setCompletedIds(newCompletedIds);
+
+      const remainingCards = deck.filter(w => !newCompletedIds.has(w.id));
+
+      if (remainingCards.length === 0) {
+        setIsComplete(true);
+        setShowConfetti(true);
+        playSound('complete');
+        checkAchievements();
+        onComplete?.({ correct: correctCount, wrong: wrongCount + 1 });
+        isButtonDisabled.current = false;
+        return;
+      }
+
+      // 다음 카드 찾기
+      let nextIndex = -1;
+      for (let i = currentIndex + 1; i < deck.length; i++) {
+        if (!newCompletedIds.has(deck[i].id)) {
+          nextIndex = i;
+          break;
+        }
+      }
+      if (nextIndex === -1) {
+        for (let i = 0; i < deck.length; i++) {
+          if (!newCompletedIds.has(deck[i].id)) {
+            nextIndex = i;
+            break;
+          }
+        }
+      }
+      if (nextIndex !== -1) {
+        setCurrentIndex(nextIndex);
+      }
     }
 
     lastSpokenWord.current = ''; // 리셋
@@ -415,23 +453,47 @@ export default function CardDeck({ words, mode, onComplete }: CardDeckProps) {
         )}
       </div>
 
-      {/* Action buttons - 일반 button 사용 */}
+      {/* Action buttons */}
       <div className="flex gap-4 mt-8">
-        <button
-          onClick={onClickWrong}
-          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95"
-        >
-          <XCircle className="w-6 h-6 text-orange-500" />
-          모르겠어요
-        </button>
+        <AnimatePresence mode="wait">
+          {!isFlipped ? (
+            <motion.button
+              key="flip-button"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              onClick={() => setIsFlipped(true)}
+              className="flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all active:scale-95"
+            >
+              <RotateCcw className="w-6 h-6" />
+              카드 뒤집기
+            </motion.button>
+          ) : (
+            <motion.div
+              key="answer-buttons"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="flex gap-4"
+            >
+              <button
+                onClick={onClickWrong}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg hover:shadow-xl transition-all active:scale-95"
+              >
+                <XCircle className="w-6 h-6 text-orange-500" />
+                모르겠어요
+              </button>
 
-        <button
-          onClick={onClickCorrect}
-          className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl transition-all active:scale-95"
-        >
-          <CheckCircle className="w-6 h-6" />
-          알아요!
-        </button>
+              <button
+                onClick={onClickCorrect}
+                className="flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl transition-all active:scale-95"
+              >
+                <CheckCircle className="w-6 h-6" />
+                알아요!
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

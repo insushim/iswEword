@@ -467,24 +467,50 @@ export default function HomePage() {
 
           {/* Action Buttons */}
           <div className="flex justify-center gap-4 mt-6">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleDontKnow}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg hover:shadow-xl transition-all"
-            >
-              <XCircle className="w-6 h-6 text-orange-500" />
-              모르겠어요
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handleKnow}
-              className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl transition-all"
-            >
-              <CheckCircle className="w-6 h-6" />
-              알아요!
-            </motion.button>
+            <AnimatePresence mode="wait">
+              {!isFlipped ? (
+                <motion.button
+                  key="flip-button"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleFlip}
+                  className="flex items-center gap-2 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-xl transition-all"
+                >
+                  <RotateCcw className="w-6 h-6" />
+                  카드 뒤집기
+                </motion.button>
+              ) : (
+                <motion.div
+                  key="answer-buttons"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex gap-4"
+                >
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleDontKnow}
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-lg shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <XCircle className="w-6 h-6 text-orange-500" />
+                    모르겠어요
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleKnow}
+                    className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-green-500 to-emerald-400 text-white font-bold text-lg shadow-lg shadow-green-500/30 hover:shadow-xl transition-all"
+                  >
+                    <CheckCircle className="w-6 h-6" />
+                    알아요!
+                  </motion.button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
 
